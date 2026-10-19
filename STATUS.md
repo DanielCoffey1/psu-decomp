@@ -12,6 +12,10 @@ Last tested: October 19, 2026, Windows x64, NVIDIA GeForce RTX 5090.
 - Full title-screen rendering, including text and first-run save-data prompts.
 - Keyboard Start, confirmation and menu navigation.
 - Offline Story Mode selection and New Game selection.
+- Opening movie playback and skipping into the first story map.
+- Clyez City 1st Floor: Central Table loads as a rendered 3D scene.
+- Player movement, HUD and nearby interaction prompts.
+- Readable Lumia dialogue and portrait while moving through the city.
 
 The baseline above runs the compiled translated game code in psu.exe. Xenia was closed during its initial setup dialog and was not used to establish gameplay claims.
 
@@ -25,10 +29,14 @@ Keyboard button edges remain available for 120 ms because both runtime UI and gu
 
 ## Outstanding
 
-- Finish verifying the opening story scene, player movement, battle and transitions.
+- Verify battle, later story progression and additional map transitions.
 - Verify creating a save and loading it after restarting.
 - Continue registering any genuinely missing indirect callbacks found during play.
 - Check for remaining rendering, audio and timing problems.
 - Replace per-draw XPS scratch uploads with proper runtime alias write watches.
+
+The runtime logs an unimplemented XLIVEBASE message (0x0005800E) during city gameplay. The tested gameplay continues, but the message's effect on later features has not been established. Requests for xf_sn_990000_00.nbl also fail; that path is absent from this disc's directory inventory, and loading continues. No replacement game file was fabricated.
+
+This is an early playable story-mode prototype. These checks do not establish a complete playthrough, working combat, save/load correctness, or a finished port.
 
 Logs and diagnostic dumps stay local. Source-generated game translations and binaries are excluded from Git.

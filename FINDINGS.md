@@ -48,4 +48,4 @@ Section inventory from the loaded PE: .rdata, .pdata, .text, PSFD00, .data, .ida
 - Booting or gameplay in an emulator.
 - Complete offline story gameplay and save/load.
 
-The executable has now been statically translated, compiled and run with native graphics, audio and input initialization. The title screen and first-run save-data prompt render with the custom GPU plugin. See STATUS.md for current native testing; emulator boot was not used as proof of recompilation progress.
+The executable has now been statically translated, compiled and run with native graphics, audio and input initialization. The title, menus, opening movie and first story map render with the custom GPU plugin. Movement and readable dialogue were observed in Clyez City. See STATUS.md for the limits of current native testing; emulator boot was not used as proof of recompilation progress.

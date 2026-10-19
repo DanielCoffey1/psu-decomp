@@ -1,6 +1,6 @@
 # Phantasy Star Universe Recompiled (experimental)
 
-A native Windows x64 static recompilation of the Xbox 360 executable, using a pinned ReXGlue runtime. The project builds and boots to a rendered title screen and first-run save-data prompt. Offline gameplay and save/load are still being tested. This is an early prototype, not a finished port or matching decompilation.
+A native Windows x64 static recompilation of the Xbox 360 executable, using a pinned ReXGlue runtime. This early playable prototype reaches the first offline story map, with movement, HUD and readable NPC dialogue. Combat, later progression and save/load remain unverified. It is not a finished port or matching decompilation.
 
 Game PowerPC instructions are translated ahead of time to C++ and compiled into psu.exe. The runtime supplies Xbox system services, graphics, input and audio. No emulator executable is launched by the project.
 

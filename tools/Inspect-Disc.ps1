@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory=$true)][string]$IsoPath,
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '../local'),
-    [switch]$ExtractExecutable
+    [switch]$ExtractExecutable,
+    [switch]$ExtractGame
 )
 $ErrorActionPreference = 'Stop'
 $stream = [IO.File]::OpenRead((Resolve-Path -LiteralPath $IsoPath).Path)
@@ -70,6 +71,33 @@ try {
         $data = Read-Bytes ($partition + [long]$exe[0].Sector * 2048) ([int]$exe[0].Size)
         if ([Text.Encoding]::ASCII.GetString($data, 0, 4) -ne 'XEX2') { throw 'Executable lacks XEX2 signature.' }
         [IO.File]::WriteAllBytes((Join-Path ([IO.Path]::GetFullPath($OutputDirectory)) 'default.xex'), $data)
+    }
+    if ($ExtractGame) {
+        $destinationRoot = [IO.Path]::GetFullPath($OutputDirectory).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+        $copyBuffer = New-Object byte[] 1048576
+        foreach ($entry in $entries) {
+            # System updates are console installers, not game data.
+            if ($entry.Path -eq '$SystemUpdate' -or $entry.Path.StartsWith('$SystemUpdate/')) { continue }
+            foreach ($component in $entry.Path.Split('/')) {
+                if ($component -eq '.' -or $component -eq '..' -or $component.IndexOfAny([IO.Path]::GetInvalidFileNameChars()) -ge 0) { throw 'Unsafe disc path.' }
+            }
+            $destination = [IO.Path]::GetFullPath((Join-Path $destinationRoot $entry.Path))
+            if (-not $destination.StartsWith($destinationRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Disc path escapes output directory.' }
+            if ($entry.Directory) { New-Item -ItemType Directory -Force -Path $destination | Out-Null; continue }
+            if ($partition + [long]$entry.Sector * 2048 + [long]$entry.Size -gt $stream.Length) { throw 'File outside image bounds.' }
+            New-Item -ItemType Directory -Force -Path ([IO.Path]::GetDirectoryName($destination)) | Out-Null
+            $output = [IO.File]::Create($destination)
+            try {
+                $stream.Position = $partition + [long]$entry.Sector * 2048
+                $remaining = [long]$entry.Size
+                while ($remaining -gt 0) {
+                    $count = $stream.Read($copyBuffer, 0, [int][Math]::Min($remaining, $copyBuffer.Length))
+                    if ($count -eq 0) { throw 'Unexpected end of image during extraction.' }
+                    $output.Write($copyBuffer, 0, $count)
+                    $remaining -= $count
+                }
+            } finally { $output.Dispose() }
+        }
     }
     Write-Output "Inspected $($entries.Count) entries. Local report: $(Join-Path $OutputDirectory 'disc.json')"
 } finally { $stream.Dispose() }

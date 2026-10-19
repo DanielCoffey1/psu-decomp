@@ -14,7 +14,27 @@ Inspected locally on October 19, 2026.
 | Executable size | 9,449,472 bytes |
 | Executable SHA-256 | 93D208EE55CC89265FBC6B9E95B1CF34AE364E47DF713CD9F3E8ADF6101C825E |
 
-The region/language text above is from the filename, not independently verified title metadata. The executable has 15 optional headers, a security-information offset of 144, and an embedded PE data offset of 12,288. Imports and executable sections have not yet been analyzed.
+The region/language text above is from the filename, not independently verified title metadata. The executable has 15 optional headers, a security-information offset of 144, and an embedded PE data offset of 12,288.
+
+## Executable analysis
+
+| Property | Observed value |
+| --- | --- |
+| Title ID | 0x534507E3 |
+| Media ID | 0x4D33612E |
+| Version | 0.0.0.1 |
+| Executable timestamp reported by SDK | 2006-10-02 15:52:28 UTC |
+| Entry point | 0x823EE5E0 |
+| Image base / mapped size | 0x82000000 / 0x00990000 |
+| Code base / size | 0x82110000 / 0x005F60C4 |
+| Default stack | 0x40000 bytes |
+| File format | Normal encryption, basic compression |
+| XAM imports | 83 function imports, 166 address/thunk records |
+| Kernel imports | 126 function imports plus 10 variable slots, 262 records |
+
+The loaded-image import analyzer resolves function ordinals using the pinned SDK's export tables. The ten variable slots have already been replaced with runtime pointers in the dump; their original ordinals are not inferred from those pointer values.
+
+Section inventory from the loaded PE: .rdata, .pdata, .text, PSFD00, .data, .idata, .XBLD and .reloc. The disc contains 1,729 game data files under DATA. Every extracted game file's size was checked against the disc directory entry, with zero mismatches.
 
 ## Verified
 
@@ -26,5 +46,6 @@ The region/language text above is from the filename, not independently verified 
 
 - Disc authenticity or integrity against a known-good dump.
 - Booting or gameplay in an emulator.
-- Compatibility of this executable with a static recompiler.
-- Any native runtime or playable build.
+- Complete offline story gameplay and save/load.
+
+The executable has now been statically translated, compiled and run with native graphics, audio and input initialization. The title screen and first-run save-data prompt render with the custom GPU plugin. See STATUS.md for current native testing; emulator boot was not used as proof of recompilation progress.

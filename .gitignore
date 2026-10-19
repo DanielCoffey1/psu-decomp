@@ -1,6 +1,7 @@
 /local/
 /build/
 /generated/
+/out/
 *.iso
 *.xex
 *.exe

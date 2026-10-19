@@ -1,0 +1,12 @@
+/local/
+/build/
+/generated/
+*.iso
+*.xex
+*.exe
+*.dll
+*.pdb
+*.afs
+*.nbl
+*.adx
+*.sfd

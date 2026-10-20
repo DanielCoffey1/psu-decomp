@@ -86,3 +86,21 @@ includes = []
 "0x8260ECC8" = {}
 "0x8260ECD8" = {}
 "0x8260ECE8" = {}
+
+# Adjustor thunks: addi r3,r3,offset; b to a translated implementation.
+# 82345B70 was reached while loading the Chapter 1 combat corridor; its
+# adjacent thunks share the same layout and each destination was reviewed.
+"0x82345B70" = {}
+"0x82345B78" = {}
+"0x82345B80" = {}
+"0x82345B88" = {}
+"0x82345B90" = {}
+# Additional exact two-instruction adjustors referenced by read-only tables.
+"0x82692D10" = {}
+"0x82692D18" = {}
+"0x82694CA8" = {}
+"0x82694CC0" = {}
+"0x82694CD0" = {}
+"0x82694CD8" = {}
+"0x82694CE0" = {}
+"0x82694CE8" = {}

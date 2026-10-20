@@ -1,6 +1,6 @@
 # Phantasy Star Universe Recompiled (experimental)
 
-A native Windows x64 static recompilation of the Xbox 360 executable, using a pinned ReXGlue runtime. This early playable prototype reaches the first offline story map, with movement, HUD and readable NPC dialogue. Combat, later progression and save/load remain unverified. It is not a finished port or matching decompilation.
+A native Windows x64 static recompilation of the Xbox 360 executable, using a pinned ReXGlue runtime. This early playable prototype reaches Chapter 1 Linear Line, with movement, HUD, NPC dialogue, initial saber combat and a save restored after restarting. Later progression is still under test. It is not a finished port or matching decompilation.
 
 Game PowerPC instructions are translated ahead of time to C++ and compiled into psu.exe. The runtime supplies Xbox system services, graphics, input and audio. No emulator executable is launched by the project.
 
@@ -23,7 +23,7 @@ $sdk = ./tools/setup-sdk.ps1
 ./tools/run.ps1
 ```
 
-Play PSU.cmd launches an already-built project. Keyboard defaults: Enter = Start, Space = A, Backspace = B, I/J/K/L = D-pad, WASD = left stick. A controller can also be used; ./tools/run.ps1 -Controller disables keyboard gamepad emulation. Runtime settings expose the other keybindings.
+Play PSU.cmd launches an already-built project. Keyboard defaults: Enter = Start, Space = A, Backspace = B, X = X/attack, P = Y, I/J/K/L = D-pad, WASD = left stick, Q/E = triggers, V = right-stick click. A controller can also be used; ./tools/run.ps1 -Controller disables keyboard gamepad emulation. Runtime settings expose the other keybindings.
 
 Extracted content, mapped executable dumps, generated translations, caches and binaries stay in ignored local/, generated/ and out/ directories. The original ISO is never modified.
 
@@ -38,6 +38,12 @@ Extracted content, mapped executable dumps, generated translations, caches and b
 The SDK is pinned by revision and file hashes. Its installed files are not modified. The custom plugin is built separately as rexgpu-psu.dll. Its shader cache is isolated in local/cache-xps.
 
 ## Analysis
+
+Launch with `./tools/run.ps1 -Diagnostics` to record file opens, save-container operations, waits of at least 50 ms, guest-present gaps of at least 250 ms, and CSV GPU counters. CSV files stay in ignored `local/traces/`; runtime logs stay beside the executable in `logs/`. Background waits and regular presents during a black image do not by themselves identify its cause. Counters from SDK components compiled without profiling remain zero.
+
+Use `-Stage` with both build scripts to produce `psu-staged.exe` and `rexgpu-psu-staged.dll` while the normal build is running. `./tools/run.ps1 -Staged -Diagnostics` launches that pair. Close the running game before replacing its executable or plugin.
+
+Saves use the runtime's Documents/psu profile directory, independently of the repository. Back up that directory before destructive save tests. Save files, screenshots and diagnostics are never committed.
 
 ```powershell
 ./tools/Analyze-Xex.ps1

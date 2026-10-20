@@ -1,6 +1,7 @@
 param([Parameter(Mandatory=$true)][string]$Sdk,
       [string]$Source,
-      [int]$Jobs=12)
+      [int]$Jobs=12,
+      [switch]$Stage)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 $Sdk=& "$PSScriptRoot/verify-sdk.ps1" -Sdk $Sdk
@@ -34,6 +35,7 @@ $build=Join-Path $root 'out/gpu'
 if ($LASTEXITCODE) { throw 'GPU CMake configure failed.' }
 & cmake --build $build --parallel $Jobs
 if ($LASTEXITCODE) { throw 'GPU build failed.' }
-$output=Join-Path $root 'out/build/win-amd64-release/rexgpu-psu.dll'
+$name=if($Stage){'rexgpu-psu-staged.dll'}else{'rexgpu-psu.dll'}
+$output=Join-Path $root "out/build/win-amd64-release/$name"
 Copy-Item -LiteralPath (Join-Path $build 'gpu/rexgpu-xenos.dll') -Destination $output -Force
 Write-Output "Built custom GPU plugin: $output"

@@ -10,6 +10,8 @@
 #include <fstream>
 #include <cstdlib>
 #include <rex/ui/imgui_drawer.h>
+#include <rex/cvar.h>
+#include <rex/perf/counter.h>
 #include "keyboard_taps.h"
 
 class PsuApp : public rex::ReXApp {
@@ -20,6 +22,12 @@ class PsuApp : public rex::ReXApp {
       rex::ui::WindowedAppContext& ctx) {
     return std::unique_ptr<PsuApp>(new PsuApp(ctx, "psu",
         PPCImageConfig));
+  }
+
+  void OnPostInitLogging() override {
+    // The pinned SDK registers perf_log_csv but never opens that file.
+    const auto path = rex::cvar::GetFlagByName("perf_log_csv");
+    if (!path.empty()) rex::perf::SetCsvLogPath(path);
   }
 
   void OnPostLoadXexImage() override {

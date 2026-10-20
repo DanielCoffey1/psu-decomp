@@ -14,12 +14,18 @@ include(generated/rexglue.cmake)
 set(PSU_SOURCES
     src/main.cpp
     src/keyboard_taps.cpp
+    src/runtime_trace.cpp
 )
 
 if(WIN32)
     add_executable(psu WIN32 ${PSU_SOURCES})
 else()
     add_executable(psu ${PSU_SOURCES})
+endif()
+
+option(PSU_STAGE_BINARY "Build a separate executable while the game is running" OFF)
+if(PSU_STAGE_BINARY)
+    set_target_properties(psu PROPERTIES OUTPUT_NAME psu-staged)
 endif()
 
 rexglue_setup_target(psu GPU_PLUGINS xenos)

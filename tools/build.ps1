@@ -4,7 +4,8 @@ param(
     [string]$Sdk,
     [ValidateRange(1, 64)]
     [int]$Jobs = 8,
-    [switch]$GenerateOnly
+    [switch]$GenerateOnly,
+    [switch]$Stage
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
@@ -40,11 +41,13 @@ try {
     if (Test-Path "$vs/VC/Tools/Llvm/x64/bin/clang++.exe") { $llvm = "$vs/VC/Tools/Llvm/x64/bin" }
     $env:PATH = "$llvm;$env:PATH"
     $preset = 'win-amd64-' + $Configuration.ToLowerInvariant()
-    & cmake --preset $preset "-DCMAKE_PREFIX_PATH=$Sdk" "-Drexglue_DIR=$Sdk/lib/cmake/rexglue" "-DREXSDK_VERSION=$($sdkLock.version)"
+    $stageValue = if ($Stage) { 'ON' } else { 'OFF' }
+    & cmake --preset $preset "-DCMAKE_PREFIX_PATH=$Sdk" "-Drexglue_DIR=$Sdk/lib/cmake/rexglue" "-DREXSDK_VERSION=$($sdkLock.version)" "-DPSU_STAGE_BINARY=$stageValue"
     if ($LASTEXITCODE -ne 0) { throw 'CMake configuration failed' }
     & cmake --build --preset $preset --parallel $Jobs
     if ($LASTEXITCODE -ne 0) { throw 'C++ build failed' }
-    Write-Output "Built: $root/out/build/$preset/psu.exe"
+    $name = if ($Stage) { 'psu-staged.exe' } else { 'psu.exe' }
+    Write-Output "Built: $root/out/build/$preset/$name"
 } finally {
     Pop-Location
 }

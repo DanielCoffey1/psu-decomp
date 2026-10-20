@@ -12,10 +12,38 @@ index da7ae1a..bd9969c 100644
  set_target_properties(rexgpu-xenos PROPERTIES
      EXPORT_NAME gpu-xenos
 diff --git a/src/graphics/command_processor.cpp b/src/graphics/command_processor.cpp
-index a744375..2c865d0 100644
+index a744375..45a575a 100644
 --- a/src/graphics/command_processor.cpp
 +++ b/src/graphics/command_processor.cpp
-@@ -1319,7 +1319,7 @@ bool CommandProcessor::ExecutePacketType3Draw(memory::RingBuffer* reader, uint32
+@@ -80,6 +80,8 @@ REXCVAR_DEFINE_BOOL(async_shader_compilation, true, "GPU",
+                     "pipelines are being prepared.")
+     .lifecycle(rex::cvar::Lifecycle::kHotReload);
+ 
++REXCVAR_DEFINE_BOOL(psu_trace_gpu, false, "PSU", "Log long gaps between guest presents");
++
+ namespace rex::graphics {
+ 
+ using namespace rex::graphics::xenos;
+@@ -958,6 +960,18 @@ bool CommandProcessor::ExecutePacketType3_XE_SWAP(memory::RingBuffer* reader, ui
+   uint32_t frontbuffer_height = reader->ReadAndSwap<uint32_t>();
+   reader->AdvanceRead((count - 4) * sizeof(uint32_t));
+ 
++  if (REXCVAR_GET(psu_trace_gpu)) {
++    static thread_local uint64_t previous_present = 0;
++    const uint64_t now = rex::chrono::Clock::QueryHostTickCount();
++    const uint64_t frequency = rex::chrono::Clock::QueryHostTickFrequency();
++    if (previous_present && now > previous_present && frequency) {
++      const double gap_ms = double(now-previous_present)*1000.0/double(frequency);
++      if (gap_ms >= 250.0)
++        REXGPU_WARN("PSU guest present gap: ms={:.3f} frame={} frontbuffer={:08X} size={}x{}",
++                    gap_ms, counter_, frontbuffer_ptr, frontbuffer_width, frontbuffer_height);
++    }
++    previous_present=now;
++  }
+   IssueSwap(frontbuffer_ptr, frontbuffer_width, frontbuffer_height);
+ 
+   ++counter_;
+@@ -1319,7 +1333,7 @@ bool CommandProcessor::ExecutePacketType3Draw(memory::RingBuffer* reader, uint32
          REXGPU_ERROR("{}: Packet too small, can't read VGT_DMA_BASE", opcode_name);
          return false;
        }

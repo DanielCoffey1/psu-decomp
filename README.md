@@ -33,6 +33,7 @@ Extracted content, mapped executable dumps, generated translations, caches and b
 - Verified virtual-forwarding callbacks referenced by constant tables and registration code.
 - A guarded code-generation repair shares one translated loop body between two overlapping entry points, preserving its four backward branches.
 - A custom D3D12 GPU plugin wraps XPS/writeback vertex and index addresses to physical backing and applies the corresponding shader-fetch mask. Scratch vertex buffers are re-uploaded on each draw because the pinned runtime does not watch CPU writes through the XPS alias. This correctness workaround may cost performance.
+- PSU's Sofdec movie shader has a presentation compatibility path: the native decoder's YUV planes are converted using the game's color constants and uploaded for display. The intro movie now shows video. Decoder, audio and playback timing remain in the translated game. Pass `--no-psu_movie_present` to compare the original graphics path. Remaining story black intervals are still under investigation.
 - Keyboard button edges remain available for 120 ms to both UI and game input polling, avoiding missed short taps.
 
 The SDK is pinned by revision and file hashes. Its installed files are not modified. The custom plugin is built separately as rexgpu-psu.dll. Its shader cache is isolated in local/cache-xps.

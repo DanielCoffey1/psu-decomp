@@ -1,3 +1,23 @@
+diff --git a/include/rex/graphics/d3d12/command_processor.h b/include/rex/graphics/d3d12/command_processor.h
+index 96d362b..75af281 100644
+--- a/include/rex/graphics/d3d12/command_processor.h
++++ b/include/rex/graphics/d3d12/command_processor.h
+@@ -490,6 +490,15 @@ class D3D12CommandProcessor : public CommandProcessor {
+ 
+   std::unique_ptr<ui::d3d12::D3D12UploadBufferPool> constant_buffer_pool_;
+ 
++  void CapturePsuMovieFrame();
++  ID3D12Resource* UploadPsuMovieFrame();
++  std::vector<uint8_t> psu_movie_rgba_;
++  uint32_t psu_movie_width_ = 0, psu_movie_height_ = 0;
++  bool psu_movie_pending_ = false;
++  std::unique_ptr<ui::d3d12::D3D12UploadBufferPool> psu_movie_upload_pool_;
++  Microsoft::WRL::ComPtr<ID3D12Resource> psu_movie_texture_;
++  D3D12_RESOURCE_STATES psu_movie_texture_state_ = D3D12_RESOURCE_STATE_COPY_DEST;
++
+   static constexpr uint32_t kViewBindfulHeapSize = 32768;
+   static_assert(kViewBindfulHeapSize <= D3D12_MAX_SHADER_VISIBLE_DESCRIPTOR_HEAP_SIZE_TIER_1);
+   std::unique_ptr<ui::d3d12::D3D12DescriptorHeapPool> view_bindful_heap_pool_;
 diff --git a/src/graphics/CMakeLists.txt b/src/graphics/CMakeLists.txt
 index da7ae1a..bd9969c 100644
 --- a/src/graphics/CMakeLists.txt
@@ -53,10 +73,196 @@ index a744375..45a575a 100644
        WriteRegister(XE_GPU_REG_VGT_DMA_BASE, vgt_dma_base);
        reg::VGT_DMA_SIZE vgt_dma_size;
 diff --git a/src/graphics/d3d12/command_processor.cpp b/src/graphics/d3d12/command_processor.cpp
-index 19874a5..64f8adc 100644
+index 19874a5..449552d 100644
 --- a/src/graphics/d3d12/command_processor.cpp
 +++ b/src/graphics/d3d12/command_processor.cpp
-@@ -2484,10 +2484,24 @@ bool D3D12CommandProcessor::IssueDraw(xenos::PrimitiveType primitive_type, uint3
+@@ -12,6 +12,7 @@
+ #include <algorithm>
+ #include <cstdarg>
+ #include <cstring>
++#include <cmath>
+ #include <sstream>
+ #include <utility>
+ 
+@@ -35,6 +36,8 @@
+ REXCVAR_DEFINE_BOOL(d3d12_bindless, true, "GPU/D3D12", "Use bindless resources where available")
+     .lifecycle(rex::cvar::Lifecycle::kRequiresRestart);
+ 
++REXCVAR_DEFINE_BOOL(psu_movie_present, true, "PSU", "Present native-decoded PSU Sofdec frames directly");
++
+ REXCVAR_DEFINE_BOOL(d3d12_readback_memexport, false, "GPU/D3D12",
+                     "Read data written by memory export in shaders on the CPU")
+     .lifecycle(rex::cvar::Lifecycle::kHotReload);
+@@ -1732,6 +1735,10 @@ void D3D12CommandProcessor::ShutdownContext() {
+     view_bindful_heap_pool_.reset();
+   }
+   constant_buffer_pool_.reset();
++  psu_movie_upload_pool_.reset();
++  psu_movie_texture_.Reset();
++  psu_movie_rgba_.clear();
++  psu_movie_pending_ = false;
+ 
+   render_target_cache_.reset();
+ 
+@@ -1891,6 +1898,120 @@ void D3D12CommandProcessor::OnGammaRampPWLValueWritten() {
+   gamma_ramp_pwl_up_to_date_ = false;
+ }
+ 
++void D3D12CommandProcessor::CapturePsuMovieFrame() {
++  const auto& regs = *register_file_;
++  const auto y = regs.GetTextureFetch(0);
++  const auto u = regs.GetTextureFetch(1);
++  const auto v = regs.GetTextureFetch(2);
++  const uint32_t width = uint32_t(y.size_2d.width) + 1;
++  const uint32_t height = uint32_t(y.size_2d.height) + 1;
++  if (width < 2 || height < 2 || width > 1920 || height > 1080 ||
++      (width & 1) || (height & 1)) return;
++  const xenos::xe_gpu_texture_fetch_t planes[] = {y, u, v};
++  const uint8_t* pixels[3];
++  uint32_t pitches[3];
++  for (uint32_t i = 0; i < 3; ++i) {
++    const auto& f = planes[i];
++    const uint32_t w = i ? width / 2 : width;
++    const uint32_t h = i ? height / 2 : height;
++    const uint32_t address = (uint32_t(f.base_address) << 12) & 0x1FFFFFFFu;
++    pitches[i] = uint32_t(f.pitch) << 5;
++    if (f.format != xenos::TextureFormat::k_8 || f.tiled || uint32_t(f.endianness) ||
++        uint32_t(f.size_2d.width) + 1 != w || uint32_t(f.size_2d.height) + 1 != h ||
++        pitches[i] < w || uint64_t(address) + uint64_t(pitches[i]) * h > 0x20000000ull) return;
++    pixels[i] = memory_->TranslatePhysical<const uint8_t*>(address);
++  }
++  // Use the game's conversion constants, including any color adjustment.
++  const float* bias = reinterpret_cast<const float*>(&regs[XE_GPU_REG_SHADER_CONSTANT_510_X]);
++  const float* scale = reinterpret_cast<const float*>(&regs[XE_GPU_REG_SHADER_CONSTANT_511_X]);
++  for (uint32_t i = 0; i < 4; ++i) {
++    if (!std::isfinite(bias[i]) || !std::isfinite(scale[i])) return;
++  }
++  float luma[256], red_v[256], blue_u[256], green_u[256], green_v[256];
++  for (uint32_t i = 0; i < 256; ++i) {
++    luma[i] = (float(i) / 255.0f + bias[0]) * scale[0];
++    const float chroma = float(i) / 255.0f + bias[1];
++    red_v[i] = chroma * scale[2] + bias[2];
++    blue_u[i] = chroma * scale[1] + bias[2];
++    green_u[i] = -chroma * bias[3];
++    green_v[i] = -chroma * scale[3];
++  }
++  psu_movie_rgba_.resize(size_t(width) * height * 4);
++  auto channel = [](float value) -> uint8_t {
++    return uint8_t(std::clamp(value * 255.0f + 0.5f, 0.0f, 255.0f));
++  };
++  for (uint32_t row = 0; row < height; ++row) {
++    const auto* yy = pixels[0] + row * pitches[0];
++    const auto* uu = pixels[1] + (row / 2) * pitches[1];
++    const auto* vv = pixels[2] + (row / 2) * pitches[2];
++    auto* dest = psu_movie_rgba_.data() + size_t(row) * width * 4;
++    for (uint32_t x = 0; x < width; ++x) {
++      const float value = luma[yy[x]];
++      dest[x * 4] = channel(value + red_v[vv[x / 2]]);
++      dest[x * 4 + 1] = channel(value + green_u[uu[x / 2]] + green_v[vv[x / 2]]);
++      dest[x * 4 + 2] = channel(value + blue_u[uu[x / 2]]);
++      dest[x * 4 + 3] = 255;
++    }
++  }
++  psu_movie_width_ = width;
++  psu_movie_height_ = height;
++  psu_movie_pending_ = true;
++}
++
++ID3D12Resource* D3D12CommandProcessor::UploadPsuMovieFrame() {
++  if (!psu_movie_pending_) return nullptr;
++  psu_movie_pending_ = false;
++  auto& provider = GetD3D12Provider();
++  if (!psu_movie_upload_pool_) {
++    psu_movie_upload_pool_ = std::make_unique<ui::d3d12::D3D12UploadBufferPool>(provider, 8 * 1024 * 1024);
++  }
++  psu_movie_upload_pool_->Reclaim(frame_completed_);
++  if (psu_movie_texture_ &&
++      (psu_movie_texture_->GetDesc().Width != psu_movie_width_ ||
++       psu_movie_texture_->GetDesc().Height != psu_movie_height_)) {
++    resources_for_deletion_.emplace_back(submission_current_, psu_movie_texture_.Detach());
++  }
++  if (!psu_movie_texture_) {
++    D3D12_HEAP_PROPERTIES heap = {};
++    heap.Type = D3D12_HEAP_TYPE_DEFAULT;
++    D3D12_RESOURCE_DESC desc = {};
++    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
++    desc.Width = psu_movie_width_;
++    desc.Height = psu_movie_height_;
++    desc.DepthOrArraySize = desc.MipLevels = 1;
++    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
++    desc.SampleDesc.Count = 1;
++    if (FAILED(provider.GetDevice()->CreateCommittedResource(&heap, D3D12_HEAP_FLAG_NONE,
++        &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&psu_movie_texture_)))) return nullptr;
++    psu_movie_texture_state_ = D3D12_RESOURCE_STATE_COPY_DEST;
++  }
++  const uint32_t pitch = (psu_movie_width_ * 4 + 255) & ~255u;
++  ID3D12Resource* upload = nullptr;
++  size_t offset = 0;
++  uint8_t* dest = psu_movie_upload_pool_->Request(frame_current_, size_t(pitch) * psu_movie_height_,
++      D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, &upload, &offset, nullptr);
++  if (!dest) return nullptr;
++  for (uint32_t y = 0; y < psu_movie_height_; ++y) {
++    std::memcpy(dest + size_t(y) * pitch,
++        psu_movie_rgba_.data() + size_t(y) * psu_movie_width_ * 4, psu_movie_width_ * 4);
++  }
++  psu_movie_upload_pool_->FlushWrites();
++  PushTransitionBarrier(psu_movie_texture_.Get(), psu_movie_texture_state_, D3D12_RESOURCE_STATE_COPY_DEST);
++  SubmitBarriers();
++  D3D12_TEXTURE_COPY_LOCATION source = {}, target = {};
++  source.pResource = upload;
++  source.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
++  source.PlacedFootprint.Offset = offset;
++  source.PlacedFootprint.Footprint = {DXGI_FORMAT_R8G8B8A8_UNORM, psu_movie_width_, psu_movie_height_, 1, pitch};
++  target.pResource = psu_movie_texture_.Get();
++  target.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
++  deferred_command_list_.D3DCopyTextureRegion(&target, 0, 0, 0, &source, nullptr);
++  PushTransitionBarrier(psu_movie_texture_.Get(), D3D12_RESOURCE_STATE_COPY_DEST,
++      D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
++  psu_movie_texture_state_ = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
++  return psu_movie_texture_.Get();
++}
++
+ void D3D12CommandProcessor::IssueSwap(uint32_t frontbuffer_ptr, uint32_t frontbuffer_width,
+                                       uint32_t frontbuffer_height) {
+   SCOPE_profile_cpu_f("gpu");
+@@ -1920,6 +2041,7 @@ void D3D12CommandProcessor::IssueSwap(uint32_t frontbuffer_ptr, uint32_t frontbu
+       texture_cache_->RequestSwapTexture(swap_texture_srv_desc, frontbuffer_format,
+                                          &frontbuffer_width_unscaled, &frontbuffer_height_unscaled);
+   if (!swap_texture_resource) {
++    psu_movie_pending_ = false;
+     // Dump texture fetch constant 0 for debugging
+     const auto& regs = *register_file_;
+     auto fetch = regs.GetTextureFetch(0);
+@@ -1928,6 +2050,17 @@ void D3D12CommandProcessor::IssueSwap(uint32_t frontbuffer_ptr, uint32_t frontbu
+         fetch.dword_0, fetch.dword_1, fetch.dword_2, fetch.dword_3, fetch.dword_4, fetch.dword_5);
+     return;
+   }
++  if (auto* movie = UploadPsuMovieFrame()) {
++    swap_texture_resource = movie;
++    swap_texture_srv_desc = {};
++    swap_texture_srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
++    swap_texture_srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
++    swap_texture_srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
++    swap_texture_srv_desc.Texture2D.MipLevels = 1;
++    frontbuffer_format = xenos::TextureFormat::k_8_8_8_8;
++    frontbuffer_width_unscaled = psu_movie_width_;
++    frontbuffer_height_unscaled = psu_movie_height_;
++  }
+   D3D12_RESOURCE_DESC swap_texture_desc = swap_texture_resource->GetDesc();
+   // The swap gamma / FXAA pass samples source texels by pixel index, but swap
+   // textures may be allocation-padded. Prefer the active frontbuffer region
+@@ -2407,6 +2540,10 @@ bool D3D12CommandProcessor::IssueDraw(xenos::PrimitiveType primitive_type, uint3
+   uint32_t used_texture_mask =
+       vertex_shader->GetUsedTextureMaskAfterTranslation() |
+       (pixel_shader != nullptr ? pixel_shader->GetUsedTextureMaskAfterTranslation() : 0);
++  if (REXCVAR_GET(psu_movie_present) && pixel_shader &&
++      pixel_shader->ucode_data_hash() == 0x722C377D90ED1A7Eull && used_texture_mask == 7) {
++    CapturePsuMovieFrame();
++  }
+   texture_cache_->RequestTextures(used_texture_mask);
+ 
+   // Bind the pipeline after configuring it and doing everything that may bind
+@@ -2484,10 +2621,24 @@ bool D3D12CommandProcessor::IssueDraw(xenos::PrimitiveType primitive_type, uint3
        vfetch_bits_remaining &= ~(uint32_t(1) << j);
        uint32_t vfetch_index = i * 32 + j;
        uint64_t vfetch_bit = uint64_t(1) << (vfetch_index & 63);

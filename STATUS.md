@@ -63,7 +63,25 @@ remain zero.
 
 The runtime logs an unimplemented XLIVEBASE message (0x0005800E) during city gameplay. The tested gameplay continues, but the message's effect on later features has not been established. Requests for xf_sn_990000_00.nbl also fail; that path is absent from this disc's directory inventory, and loading continues. No replacement game file was fabricated.
 
-Long black transitions remain unresolved. One observed black interval continued
+The intro movie's missing video was reproduced and corrected on October 20.
+The native Sofdec decoder produced recognizable YUV frames while the original
+graphics path displayed black. The custom plugin now recognizes the exact PSU
+YUV movie shader, validates its three linear 8-bit planes, converts them with
+the game's color constants, and uploads a frame for presentation. Upload buffers
+are retained until their GPU frame completes. Frames are used only for the swap
+following a matching movie draw, so gameplay does not retain a stale movie image.
+The installed SDK remains unchanged; the plugin build uses its patched source
+headers consistently.
+
+Verified in the native Release build: visible intro movie footage, exiting the
+movie, loading the existing Linear Line save, and returning to a rendered
+in-game interaction. The user then resumed story testing and reported that black
+intervals might be shorter but still remain; that result is inconclusive.
+Full movie completion, all story movies, subtitle/overlay behavior, and performance
+across later scenes still need verification. This is a targeted compatibility
+path, not a demonstrated repair of the underlying graphics fault.
+
+Other black transitions remain unresolved. One observed black interval continued
 to present around 60 frames per second with about 303 draws per frame. The
 observed save-file opens took about 0.1 ms. Neither result identifies the cause
 of the visual pause, and no blanket fade skip or timing bypass has been applied.

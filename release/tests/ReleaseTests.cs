@@ -66,8 +66,16 @@ namespace PsuRelease {
                 string invalidTarget = Path.Combine(root, "invalid-game");
                 Reject(() => Installer.Install(valid, invalidTarget, new Settings(), false, (p,s) => {}, CancellationToken.None), "Invalid ISO installed");
                 Assert(!Directory.Exists(invalidTarget), "Invalid ISO left an install");
+                Reject(() => GameIcon.FromXex(new byte[24]), "Accepted an unsupported icon source");
                 if (args.Length == 1) {
-                    using (var disc = new DiscImage(args[0])) { disc.VerifyGame(); Assert(disc.ExtractedSize > 1024 * 1024, "Real disc was empty"); }
+                    using (var disc = new DiscImage(args[0])) {
+                        byte[] executable = disc.ReadGameExecutable(); Assert(disc.ExtractedSize > 1024 * 1024, "Real disc was empty");
+                        byte[] iconBytes = GameIcon.FromXex(executable);
+                        using (var stream = new MemoryStream(iconBytes)) using (var icon = new System.Drawing.Icon(stream))
+                            Assert(icon.Width == 64 && icon.Height == 64, "Official icon does not load in Windows");
+                        using (var hash = System.Security.Cryptography.SHA256.Create())
+                            Assert(DiscImage.Hex(hash.ComputeHash(iconBytes.Skip(22).ToArray())) == GameIcon.PngHash, "Icon altered the official artwork");
+                    }
                     var cancel = new CancellationTokenSource(); bool cancelled = false;
                     string target = Path.Combine(root, "cancelled");
                     try { Installer.Install(args[0], target, new Settings(), false, (p,s) => { if (p >= 4) cancel.Cancel(); }, cancel.Token); } catch (OperationCanceledException) { cancelled = true; }

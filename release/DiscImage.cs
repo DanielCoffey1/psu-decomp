@@ -84,13 +84,16 @@ namespace PsuRelease {
             }
         }
         static bool IsUpdate(string path) { return path.Equals("$SystemUpdate", StringComparison.OrdinalIgnoreCase) || path.StartsWith("$SystemUpdate/", StringComparison.OrdinalIgnoreCase); }
-        public void VerifyGame() {
+        public void VerifyGame() { ReadGameExecutable(); }
+        public byte[] ReadGameExecutable() {
             var xex = entries.SingleOrDefault(e => !e.Directory && e.Path.Equals("default.xex", StringComparison.OrdinalIgnoreCase));
             if (xex == null || xex.Size > 64 * 1024 * 1024) throw new InvalidDataException("Missing or invalid default.xex.");
+            byte[] executable = Read(partition + (long)xex.Sector * 2048, (int)xex.Size);
             using (var hash = SHA256.Create()) {
-                string actual = Hex(hash.ComputeHash(Read(partition + (long)xex.Sector * 2048, (int)xex.Size)));
+                string actual = Hex(hash.ComputeHash(executable));
                 if (actual != SupportedXex) throw new InvalidDataException("This release requires the recorded USA/Europe Xbox 360 disc revision. The ISO's default.xex does not match.\nSHA-256: " + actual);
             }
+            return executable;
         }
         public static string Hex(byte[] bytes) { return BitConverter.ToString(bytes).Replace("-", "").ToLowerInvariant(); }
         public static string HashFile(string path) { using (var hash = SHA256.Create()) using (var file = File.OpenRead(path)) return Hex(hash.ComputeHash(file)); }

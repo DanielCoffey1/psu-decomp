@@ -6,7 +6,7 @@ Game PowerPC instructions are translated ahead of time to C++ and compiled into 
 
 ## Download and install (Windows)
 
-Download the installer from the [0.1.0-preview.1 prerelease](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.1).
+Download the installer from the [0.1.0-preview.2 prerelease](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.2).
 This repository is private, so you must be signed in to a GitHub account with access.
 
 You need Windows 10/11 x64, .NET Framework 4.8, a Direct3D 12 GPU, your own
@@ -16,7 +16,7 @@ requires GPU rasterizer-ordered-view (ROV) support. Setup checks that the ISO's
 executable matches the [supported revision](FINDINGS.md).
 
 1. In the release's **Assets**, download
-   **PSU-Recompiled-0.1.0-preview.1-win-x64-Setup.exe**. The source ZIP is for
+   **PSU-Recompiled-0.1.0-preview.2-win-x64-Setup.exe**. The source ZIP is for
    developers; it does not install the game.
 2. Run the installer and click **Browse...** beside **Game ISO** to select your ISO.
    You do not need to mount or extract it first.
@@ -26,7 +26,8 @@ executable matches the [supported revision](FINDINGS.md).
    the desktop without a title bar. Keep **Create a desktop shortcut** checked.
 5. Click **Install game**. Setup verifies the disc revision and extracts game
    data locally. No compiler, administrator access or installation-time download
-   is required. Your ISO is left unchanged.
+   is required. Your ISO is left unchanged. Setup also extracts the official Xbox
+   360 PSU title icon for the desktop shortcut and launcher window.
 6. Open **Phantasy Star Universe Recompiled** on your desktop, or **PSU Launcher.exe**
    in the installation folder. Click **Save & Play**, then choose offline story
    mode in the game. Use **Continue** to load an existing save.
@@ -81,7 +82,7 @@ the native executable and patched GPU using the instructions below before packag
 ./tools/test-release.ps1 -IsoPath 'D:/Games/Phantasy Star Universe.iso'
 ```
 
-Output: `out/release/PSU-Recompiled-0.1.0-preview.1-win-x64/`, including a single
+Output: `out/release/PSU-Recompiled-0.1.0-preview.2-win-x64/`, including a single
 Setup.exe, source snapshot, build metadata, release notes, validation record and
 SHA-256 checksums. Use `-OutputDirectory` to choose a different artifact folder.
 Packaging stays local; this script does not publish a GitHub release.

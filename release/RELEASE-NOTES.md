@@ -1,13 +1,18 @@
-# PSU Recompiled 0.1.0-preview.1 — experimental prerelease
+# PSU Recompiled 0.1.0-preview.2 — experimental prerelease
 
 Experimental Windows x64 native recompilation of the Xbox 360 offline story mode.
 This is an early playable build; later chapters and a complete playthrough are
 not yet verified.
 
+This update uses the official Xbox 360 PSU title icon for installed desktop
+shortcuts and the launcher window. Setup extracts the original 64 × 64 artwork
+from your verified game executable locally; the artwork is not bundled in the
+installer or source repository. Gameplay and graphics settings are unchanged.
+
 ## Install and play
 
-1. Download PSU-Recompiled-0.1.0-preview.1-win-x64-Setup.exe from the release's
-   Assets and run it: https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.1
+1. Download PSU-Recompiled-0.1.0-preview.2-win-x64-Setup.exe from the release's
+   Assets and run it: https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.2
 2. Browse to your USA/Europe Xbox 360 PSU ISO and choose a new installation folder.
 3. Choose graphics settings and click Install game. The installer verifies the
    executable revision, extracts your game data and creates a desktop shortcut.

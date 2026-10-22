@@ -1,12 +1,17 @@
-# 0.1.0-preview.1 validation
+# 0.1.0-preview.2 validation
 
 Tested October 22, 2026 on Windows x64 with an NVIDIA GeForce RTX 5090.
 
 ## Installer and launcher
 
-- 33 automated checks passed, including real ISO verification, cancellation and
+- 36 automated checks passed, including real ISO verification, cancellation and
   rollback, existing-folder preservation, path validation, settings persistence,
   DPI sizing, borderless defaults and rejection of unsupported frame rates.
+- The icon extractor rejects an unsupported executable. The official 64 × 64
+  title image from the real ISO loads as a Windows icon, and its PNG bytes match
+  the original artwork's SHA-256 after wrapping in an ICO container.
+- A fresh preview.2 install generated the expected PSU.ico. The existing desktop
+  shortcut was updated to use it, and the launcher title-bar icon was inspected.
 - A fresh install from Setup.exe extracted 1,730 game files (6,881,780,470 bytes).
   All 36 packaged payload files matched their SHA-256 manifest, and the extracted
   default.xex matched the required revision.

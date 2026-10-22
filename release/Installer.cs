@@ -37,6 +37,7 @@ namespace PsuRelease {
                 }
                 cancel.ThrowIfCancellationRequested();
                 if (DiscImage.HashFile(Path.Combine(staging, "game", "default.xex")) != DiscImage.SupportedXex) throw new InvalidDataException("Extracted executable verification failed.");
+                GameIcon.Install(staging);
                 settings.Save(Path.Combine(staging, "settings.xml"));
                 File.WriteAllText(Path.Combine(staging, "installation.txt"), "PSU Recompiled " + Program.Version + "\r\nXEX SHA-256: " + DiscImage.SupportedXex + "\r\n");
                 cancel.ThrowIfCancellationRequested();
@@ -90,11 +91,30 @@ namespace PsuRelease {
                 lt.InvokeMember("TargetPath", BindingFlags.SetProperty, null, link, new object[] { Path.Combine(root, "PSU Launcher.exe") });
                 lt.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, link, new object[] { root });
                 lt.InvokeMember("Description", BindingFlags.SetProperty, null, link, new object[] { "Play PSU Recompiled or change graphics settings" });
+                lt.InvokeMember("IconLocation", BindingFlags.SetProperty, null, link, new object[] { Path.Combine(root, GameIcon.FileName) + ",0" });
                 lt.InvokeMember("Save", BindingFlags.InvokeMethod, null, link, null);
             } finally {
                 if (link != null) System.Runtime.InteropServices.Marshal.FinalReleaseComObject(link);
                 System.Runtime.InteropServices.Marshal.FinalReleaseComObject(shell);
             }
+        }
+        public static void RefreshShortcutIcons(string root) {
+            string target = Path.GetFullPath(Path.Combine(root, "PSU Launcher.exe"));
+            string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            Type type = Type.GetTypeFromProgID("WScript.Shell"); object shell = Activator.CreateInstance(type);
+            try {
+                foreach (string path in Directory.EnumerateFiles(desktop, "*.lnk")) {
+                    object link = null;
+                    try {
+                        link = type.InvokeMember("CreateShortcut", BindingFlags.InvokeMethod, null, shell, new object[] { path });
+                        Type lt = link.GetType();
+                        string existingTarget = (string)lt.InvokeMember("TargetPath", BindingFlags.GetProperty, null, link, null);
+                        if (!String.Equals(existingTarget, target, StringComparison.OrdinalIgnoreCase)) continue;
+                        lt.InvokeMember("IconLocation", BindingFlags.SetProperty, null, link, new object[] { Path.Combine(root, GameIcon.FileName) + ",0" });
+                        lt.InvokeMember("Save", BindingFlags.InvokeMethod, null, link, null);
+                    } finally { if (link != null) System.Runtime.InteropServices.Marshal.FinalReleaseComObject(link); }
+                }
+            } finally { System.Runtime.InteropServices.Marshal.FinalReleaseComObject(shell); }
         }
     }
 }

@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace PsuRelease {
     public static class Program {
-        public const string Version = "0.1.0-preview.1";
+        public const string Version = "0.1.0-preview.2";
         [STAThread] public static int Main(string[] args) {
             try {
                 // Headless installation uses the same validation and transactional path as the UI.
@@ -19,6 +19,10 @@ namespace PsuRelease {
                     File.WriteAllText(Path.Combine(args[2], "install-result.txt"), warning.Length == 0 ? "Installation verified." : warning); return 0;
                 }
                 if (args.Length == 2 && args[0] == "--verify-iso") { using (var disc = new DiscImage(args[1])) disc.VerifyGame(); return 0; }
+                if (args.Length == 1 && args[0] == "--refresh-icon") {
+                    string root = AppDomain.CurrentDomain.BaseDirectory;
+                    GameIcon.Install(root); Installer.RefreshShortcutIcons(root); return 0;
+                }
                 if (args.Length > 0) throw new ArgumentException("Unknown command-line option.");
                 Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
 #if INSTALLER
@@ -51,6 +55,8 @@ namespace PsuRelease {
         public MainForm(bool install) {
             SuspendLayout();
             installing = install; Text = install ? "PSU Recompiled — Install" : "PSU Recompiled — Launcher";
+            string iconPath = Path.Combine(root, GameIcon.FileName);
+            if (!install && File.Exists(iconPath)) using (var icon = new Icon(iconPath)) Icon = (Icon)icon.Clone();
             AutoScaleDimensions = new SizeF(96, 96); AutoScaleMode = AutoScaleMode.Dpi;
             Font = new Font("Segoe UI", 10); StartPosition = FormStartPosition.CenterScreen;
             ClientSize = new Size(760, install ? 720 : 580); MinimumSize = new Size(650, 500);

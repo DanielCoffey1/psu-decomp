@@ -1,6 +1,12 @@
 # Native recompilation status
 
-Last tested: October 21, 2026, Windows x64, NVIDIA GeForce RTX 5090.
+Last tested: October 22, 2026, Windows x64, NVIDIA GeForce RTX 5090.
+
+The 0.1.0-preview.1 installer and launcher support local ISO extraction, desktop
+shortcuts, borderless windowed mode and up to 4K rendering. The launcher uses
+60 FPS because the 120 FPS story test accelerated gameplay; normal-speed higher
+frame rates remain unfinished. See the [installation instructions](README.md#download-and-install-windows)
+and [release validation](release/VALIDATION.md).
 
 ## Verified locally
 

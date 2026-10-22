@@ -4,6 +4,88 @@ A native Windows x64 static recompilation of the Xbox 360 executable, using a pi
 
 Game PowerPC instructions are translated ahead of time to C++ and compiled into psu.exe. The runtime supplies Xbox system services, graphics, input and audio. No emulator executable is launched by the project.
 
+## Download and install (Windows)
+
+Download the installer from the [0.1.0-preview.1 prerelease](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.1).
+This repository is private, so you must be signed in to a GitHub account with access.
+
+You need Windows 10/11 x64, .NET Framework 4.8, a Direct3D 12 GPU, your own
+USA/Europe Xbox 360 **Phantasy Star Universe ISO**, and at least 8 GB of free space
+for the installation in addition to the ISO. The verified story-cutscene fix
+requires GPU rasterizer-ordered-view (ROV) support. Setup checks that the ISO's
+executable matches the [supported revision](FINDINGS.md).
+
+1. In the release's **Assets**, download
+   **PSU-Recompiled-0.1.0-preview.1-win-x64-Setup.exe**. The source ZIP is for
+   developers; it does not install the game.
+2. Run the installer and click **Browse...** beside **Game ISO** to select your ISO.
+   You do not need to mount or extract it first.
+3. Choose a **new installation folder**, or keep the default
+   `%LOCALAPPDATA%\Programs\PSU Recompiled`. Setup will not overwrite an existing folder.
+4. Choose your graphics settings. Leave **Borderless windowed** checked to fill
+   the desktop without a title bar. Keep **Create a desktop shortcut** checked.
+5. Click **Install game**. Setup verifies the disc revision and extracts game
+   data locally. No compiler, administrator access or installation-time download
+   is required. Your ISO is left unchanged.
+6. Open **Phantasy Star Universe Recompiled** on your desktop, or **PSU Launcher.exe**
+   in the installation folder. Click **Save & Play**, then choose offline story
+   mode in the game. Use **Continue** to load an existing save.
+
+The installer supplies the native executable and runtime. Game assets come from
+your ISO; no ISO, original XEX, movies or other disc data are included in the download.
+This experimental prerelease is unsigned. See the [release notes](release/RELEASE-NOTES.md)
+and [validation record](release/VALIDATION.md) for tested behavior and known issues.
+
+### Resolution, borderless mode and frame rate
+
+- **For 4K:** choose **3840 × 2160 (4K)** and **3× — up to 4K** render scale.
+  Borderless mode uses your desktop's display mode; use a 3840 × 2160 desktop for
+  4K display output. The window-resolution selector applies when borderless mode
+  is off. The render-scale selector controls internal rendering in either mode.
+- **For a regular window:** uncheck **Borderless windowed** and choose a window
+  resolution. Oversized windows fit the screen without reducing internal render scale.
+- **Frame rate is currently 60 FPS.** Testing confirmed that 120 FPS speeds up
+  gameplay. 30 FPS, 120 FPS and unlocked mode are unavailable until timing is fixed.
+  Higher resolution can reduce performance; movies retain their original resolution.
+- Change settings in the launcher before starting the game. Settings apply on the
+  next launch; close the running game before starting another copy.
+
+### Saves, updates and troubleshooting
+
+Saves are stored in **Documents\psu**, separate from the installation. Existing
+development-build saves use the same location. Graphics settings are stored in
+`settings.xml` beside the launcher, and logs are in the installation's `bin\logs`.
+
+To update, close the game and install the newer version into a **new folder**.
+Your saves remain available. If a desktop shortcut already exists, setup creates
+a second shortcut with a date/time suffix; use the new shortcut for the new build.
+To uninstall, close the game and remove its installation folder and shortcut.
+Keep Documents\psu if you want to retain saves.
+
+If setup reports an unsupported executable, check that you selected the matching
+Xbox 360 USA/Europe disc revision. If it reports an existing destination, choose
+a new folder. If no shortcut was created, run `PSU Launcher.exe` directly.
+Some opening cutscenes still have a bottom black strip; it also occurs at 1×
+rendering and its original-console behavior remains unverified. Later chapters
+and a complete story playthrough have not yet been verified.
+
+## Build the installer (developers)
+
+The launcher/installer is built using Windows' .NET Framework C# compiler. Build
+the native executable and patched GPU using the instructions below before packaging.
+
+```powershell
+# Use the verified SDK and patched source tree from the native build below.
+# Pass -BuildNative to rebuild the native executable and GPU as part of packaging.
+./tools/build-release.ps1 -Sdk $sdk -GpuSource 'C:/path/to/patched/rexglue-source'
+./tools/test-release.ps1 -IsoPath 'D:/Games/Phantasy Star Universe.iso'
+```
+
+Output: `out/release/PSU-Recompiled-0.1.0-preview.1-win-x64/`, including a single
+Setup.exe, source snapshot, build metadata, release notes, validation record and
+SHA-256 checksums. Use `-OutputDirectory` to choose a different artifact folder.
+Packaging stays local; this script does not publish a GitHub release.
+
 ## Build
 
 Requires Windows x64, PowerShell 7, Git, and Visual Studio C++ Build Tools with LLVM/Clang, CMake and Ninja. Use the recorded disc revision in [FINDINGS.md](FINDINGS.md); the build rejects other executable hashes.

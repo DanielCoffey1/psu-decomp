@@ -32,19 +32,56 @@ index da7ae1a..bd9969c 100644
  set_target_properties(rexgpu-xenos PROPERTIES
      EXPORT_NAME gpu-xenos
 diff --git a/src/graphics/command_processor.cpp b/src/graphics/command_processor.cpp
-index a744375..45a575a 100644
+index a744375..d62eeb3 100644
 --- a/src/graphics/command_processor.cpp
 +++ b/src/graphics/command_processor.cpp
-@@ -80,6 +80,8 @@ REXCVAR_DEFINE_BOOL(async_shader_compilation, true, "GPU",
+@@ -14,6 +14,8 @@
+ #include <cmath>
+ #include <cstring>
+ #include <string_view>
++#include <chrono>
++#include <thread>
+ 
+ #include <fmt/format.h>
+ 
+@@ -80,6 +82,10 @@ REXCVAR_DEFINE_BOOL(async_shader_compilation, true, "GPU",
                      "pipelines are being prepared.")
      .lifecycle(rex::cvar::Lifecycle::kHotReload);
  
 +REXCVAR_DEFINE_BOOL(psu_trace_gpu, false, "PSU", "Log long gaps between guest presents");
++REXCVAR_DEFINE_INT32(psu_max_fps, 0, "PSU", "Maximum guest presents per second (0 = no additional cap)")
++    .range(0, 360);
 +
  namespace rex::graphics {
  
  using namespace rex::graphics::xenos;
-@@ -958,6 +960,18 @@ bool CommandProcessor::ExecutePacketType3_XE_SWAP(memory::RingBuffer* reader, ui
+@@ -930,6 +936,25 @@ bool CommandProcessor::ExecutePacketType3_XE_SWAP(memory::RingBuffer* reader, ui
+                                                   uint32_t count) {
+   SCOPE_profile_cpu_f("gpu");
+ 
++  // Limit actual guest frames, not just UI repaints. Keep guest clock scaling
++  // unchanged. Discard timing debt after loading stalls instead of catching up.
++  {
++    using Clock = std::chrono::steady_clock;
++    static thread_local auto next_present = Clock::time_point{};
++    static thread_local int previous_cap = 0;
++    const int cap = REXCVAR_GET(psu_max_fps);
++    auto now = Clock::now();
++    if (cap > 0) {
++      const auto period = std::chrono::nanoseconds(1000000000LL / cap);
++      if (cap != previous_cap || now > next_present + period) next_present = now;
++      if (now < next_present) std::this_thread::sleep_until(next_present);
++      next_present += period;
++    } else {
++      next_present = now;
++    }
++    previous_cap = cap;
++  }
++
+ #ifdef REXGLUE_ENABLE_PERF_COUNTERS
+   {
+     static uint64_t last_frame_tick = 0;
+@@ -958,6 +983,18 @@ bool CommandProcessor::ExecutePacketType3_XE_SWAP(memory::RingBuffer* reader, ui
    uint32_t frontbuffer_height = reader->ReadAndSwap<uint32_t>();
    reader->AdvanceRead((count - 4) * sizeof(uint32_t));
  
@@ -63,7 +100,7 @@ index a744375..45a575a 100644
    IssueSwap(frontbuffer_ptr, frontbuffer_width, frontbuffer_height);
  
    ++counter_;
-@@ -1319,7 +1333,7 @@ bool CommandProcessor::ExecutePacketType3Draw(memory::RingBuffer* reader, uint32
+@@ -1319,7 +1356,7 @@ bool CommandProcessor::ExecutePacketType3Draw(memory::RingBuffer* reader, uint32
          REXGPU_ERROR("{}: Packet too small, can't read VGT_DMA_BASE", opcode_name);
          return false;
        }
@@ -73,7 +110,7 @@ index a744375..45a575a 100644
        WriteRegister(XE_GPU_REG_VGT_DMA_BASE, vgt_dma_base);
        reg::VGT_DMA_SIZE vgt_dma_size;
 diff --git a/src/graphics/d3d12/command_processor.cpp b/src/graphics/d3d12/command_processor.cpp
-index 19874a5..449552d 100644
+index 19874a5..713e2fa 100644
 --- a/src/graphics/d3d12/command_processor.cpp
 +++ b/src/graphics/d3d12/command_processor.cpp
 @@ -12,6 +12,7 @@
@@ -251,7 +288,25 @@ index 19874a5..449552d 100644
    D3D12_RESOURCE_DESC swap_texture_desc = swap_texture_resource->GetDesc();
    // The swap gamma / FXAA pass samples source texels by pixel index, but swap
    // textures may be allocation-padded. Prefer the active frontbuffer region
-@@ -2407,6 +2540,10 @@ bool D3D12CommandProcessor::IssueDraw(xenos::PrimitiveType primitive_type, uint3
+@@ -1968,6 +2101,17 @@ void D3D12CommandProcessor::IssueSwap(uint32_t frontbuffer_ptr, uint32_t frontbu
+   bool swap_source_scaled = frontbuffer_width_unscaled && frontbuffer_height_unscaled &&
+                             (source_width_scaled != frontbuffer_width_unscaled ||
+                              source_height_scaled != frontbuffer_height_unscaled);
++  // Report the actual presented texture size so release testing can distinguish
++  // higher-resolution rendering from merely enlarging the host window.
++  static thread_local uint32_t reported_output_width = 0, reported_output_height = 0;
++  if (guest_output_width != reported_output_width || guest_output_height != reported_output_height) {
++    REXGPU_INFO("PSU output source: {}x{} (original {}x{}, draw scale {}x{})",
++                guest_output_width, guest_output_height, frontbuffer_width_unscaled,
++                frontbuffer_height_unscaled, texture_cache_->draw_resolution_scale_x(),
++                texture_cache_->draw_resolution_scale_y());
++    reported_output_width = guest_output_width;
++    reported_output_height = guest_output_height;
++  }
+   if (texture_cache_->IsDrawResolutionScaled() && !swap_source_scaled) {
+     static bool draw_scale_swap_unscaled_logged = false;
+     if (!draw_scale_swap_unscaled_logged) {
+@@ -2407,6 +2551,10 @@ bool D3D12CommandProcessor::IssueDraw(xenos::PrimitiveType primitive_type, uint3
    uint32_t used_texture_mask =
        vertex_shader->GetUsedTextureMaskAfterTranslation() |
        (pixel_shader != nullptr ? pixel_shader->GetUsedTextureMaskAfterTranslation() : 0);
@@ -262,7 +317,7 @@ index 19874a5..449552d 100644
    texture_cache_->RequestTextures(used_texture_mask);
  
    // Bind the pipeline after configuring it and doing everything that may bind
-@@ -2484,10 +2621,24 @@ bool D3D12CommandProcessor::IssueDraw(xenos::PrimitiveType primitive_type, uint3
+@@ -2484,10 +2632,24 @@ bool D3D12CommandProcessor::IssueDraw(xenos::PrimitiveType primitive_type, uint3
        vfetch_bits_remaining &= ~(uint32_t(1) << j);
        uint32_t vfetch_index = i * 32 + j;
        uint64_t vfetch_bit = uint64_t(1) << (vfetch_index & 63);

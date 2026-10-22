@@ -1,0 +1,20 @@
+Third-party notices for the pinned ReXGlue runtime and PSU GPU plugin.
+
+The following source revisions and license texts accompany this review build:
+sdl3-LICENSE.txt.txt - https://github.com/libsdl-org/SDL/tree/147a8ee32dbf9ac02f3794964490687b6bbda1bc
+fmt-LICENSE.txt - https://github.com/fmtlib/fmt/tree/407c905e45ad75fc29bf0f9bb7c5c2fd3475976f
+spdlog-LICENSE.txt - https://github.com/gabime/spdlog/tree/79524ddd08a4ec981b7fea76afd08ee05f83755d
+xxHash-LICENSE.txt - https://github.com/Cyan4973/xxHash/tree/e626a72bc2321cd320e953a0ccf1584cad60f363
+imgui-LICENSE.txt.txt - https://github.com/ocornut/imgui/tree/6d910d5487d11ca567b61c7824b0c78c569d62f0
+simde-COPYING.txt - https://github.com/simd-everywhere/simde/tree/71fd833d9666141edcd1d3c109a80e228303d8d7
+tomlplusplus-LICENSE.txt - https://github.com/marzer/tomlplusplus/tree/30172438cee64926dc41fdd9c11fb3ba5b2ba9de
+utfcpp-LICENSE.txt - https://github.com/nemtrif/utfcpp/tree/63d64de49fd6b829f7c8694df5ab2ee625cb7134
+o1heap-LICENSE.txt - https://github.com/pavel-kirienko/o1heap/tree/388a73fd9007300e5130c5fe352d9ce3288b6dde
+cli11-LICENSE.txt - https://github.com/CLIUtils/CLI11/tree/bfffd37e1f804ca4fae1caae106935791696b6a9
+libmspack-COPYING.LIB.txt - https://github.com/kyz/libmspack/tree/305907723a4e7ab2018e58040059ffb5e77db837
+FFmpeg-COPYING.LGPLv2.1.txt - https://github.com/wmarti/FFmpeg/tree/0604b464c7cb4ebc94940cf1f324a3b26b87717c
+FFmpeg-LICENSE.md.txt - https://github.com/wmarti/FFmpeg/tree/0604b464c7cb4ebc94940cf1f324a3b26b87717c
+
+FFmpeg/libmspack are linked into rexruntime.dll by the pinned SDK. Their corresponding source and build configuration are available from the pinned source revisions above and the ReXGlue source tree. The project source snapshot includes the PSU GPU patch and build scripts.
+
+ReXGlue source and submodules: https://github.com/rexglue/rexglue-sdk/tree/bd833a2ab69d305f99ddf57418fc38ffec8af93d

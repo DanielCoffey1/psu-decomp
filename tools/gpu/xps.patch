@@ -287,6 +287,32 @@ index 19874a5..449552d 100644
        switch (vfetch_constant.type) {
          case xenos::FetchConstantType::kVertex:
            break;
+diff --git a/src/graphics/d3d12/render_target_cache.cpp b/src/graphics/d3d12/render_target_cache.cpp
+index dd321a5..be9e5f5 100644
+--- a/src/graphics/d3d12/render_target_cache.cpp
++++ b/src/graphics/d3d12/render_target_cache.cpp
+@@ -41,7 +41,10 @@
+ REXCVAR_DEFINE_BOOL(native_stencil_value_output_d3d12_intel, false, "GPU/D3D12",
+                     "Native stencil value output for Intel D3D12");
+ 
+-REXCVAR_DEFINE_STRING(render_target_path_d3d12, "", "GPU/D3D12",
++// Host render targets lose PSU's final cutscene image even while the scene
++// texture is valid. ROV preserves it through the final rendering passes.
++// Keep the explicit rtv override available for comparisons.
++REXCVAR_DEFINE_STRING(render_target_path_d3d12, "rov", "GPU/D3D12",
+                       "D3D12 render target implementation path")
+     .lifecycle(rex::cvar::Lifecycle::kInitOnly);
+ 
+@@ -202,6 +205,9 @@ bool D3D12RenderTargetCache::Initialize() {
+     path_ = Path::kHostRenderTargets;
+   }
+ 
++  REXGPU_INFO("PSU render target path: {}",
++      path_ == Path::kPixelShaderInterlock ? "rov" : "rtv");
++
+   // Create the buffer for reinterpreting EDRAM contents.
+   uint32_t edram_buffer_size =
+       xenos::kEdramSizeBytes * (draw_resolution_scale_x() * draw_resolution_scale_y());
 diff --git a/src/graphics/pipeline/shader/dxbc_translator_fetch.cpp b/src/graphics/pipeline/shader/dxbc_translator_fetch.cpp
 index 31de175..a61efdf 100644
 --- a/src/graphics/pipeline/shader/dxbc_translator_fetch.cpp

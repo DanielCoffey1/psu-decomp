@@ -1,6 +1,6 @@
 # Native recompilation status
 
-Last tested: October 19, 2026, Windows x64, NVIDIA GeForce RTX 5090.
+Last tested: October 21, 2026, Windows x64, NVIDIA GeForce RTX 5090.
 
 ## Verified locally
 
@@ -81,10 +81,32 @@ Full movie completion, all story movies, subtitle/overlay behavior, and performa
 across later scenes still need verification. This is a targeted compatibility
 path, not a demonstrated repair of the underlying graphics fault.
 
-Other black transitions remain unresolved. One observed black interval continued
-to present around 60 frames per second with about 303 draws per frame. The
-observed save-file opens took about 0.1 ms. Neither result identifies the cause
-of the visual pause, and no blanket fade skip or timing bypass has been applied.
+The reproduced Chapter 1 story blackouts were corrected on October 21 by
+selecting the D3D12 ROV render-target path in the PSU plugin. With the old RTV
+path, GPU captures showed a valid scene and final composition, followed by a
+black presentation image. The exact failing RTV clear/ownership/copy operation
+has not been isolated. ROV preserves the image through this sequence without
+changing story timing, fades, or translated game logic.
+
+The same saved checkpoint was replayed with ROV explicitly confirmed in the
+startup log. The corridor dialogue, camera changes and Pannon introduction were
+visible, and the user reported that the blackouts appeared fixed. The captured
+story segment contained zero completely black samples among 42 captures;
+the earlier RTV replay had 12 among 38. These are sampled replays with different
+timings, not exhaustive frame-by-frame coverage. Testing continued into saber
+combat, displaying damage numbers and EXP +4 for defeated Pannons.
+
+Immediate resolve readback did not fix the RTV failure. Earlier tests using
+separated GPU option values were invalid: late-registered plugin options need
+`--name=value`. The final change defaults to ROV without forcing readback or
+retaining the temporary image/vertex capture code. Explicit RTV selection still
+works, and unsupported hardware retains the runtime's RTV fallback. Later
+chapters and performance on other GPUs remain unverified.
+
+The clean Release plugin starts with `PSU render target path: rov` without a
+command-line override. Intro movie footage remains visible with the existing
+Sofdec presentation path. The patch applies cleanly to the pinned SDK source
+and the plugin builds successfully. Temporary GPU capture code is excluded.
 
 This is an early playable story-mode prototype. These checks do not establish a complete playthrough, exhaustive combat or save/load correctness, or a finished port.
 

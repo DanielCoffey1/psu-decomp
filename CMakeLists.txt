@@ -15,6 +15,7 @@ set(PSU_SOURCES
     src/main.cpp
     src/keyboard_taps.cpp
     src/runtime_trace.cpp
+    src/extra_mode.cpp
 )
 
 if(WIN32)

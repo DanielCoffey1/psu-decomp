@@ -6,8 +6,10 @@ Game PowerPC instructions are translated ahead of time to C++ and compiled into 
 
 ## Download and install (Windows)
 
-Download the installer from the [0.1.0-preview.2 prerelease](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.2).
+Download the current published installer from the [0.1.0-preview.2 prerelease](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.2).
 This repository is private, so you must be signed in to a GitHub account with access.
+The Extra Mode unlock described below is new in the **0.1.0-preview.3 review
+build** and source; it is not included in the published preview.2 installer.
 
 You need Windows 10/11 x64, .NET Framework 4.8, a Direct3D 12 GPU, your own
 USA/Europe Xbox 360 **Phantasy Star Universe ISO**, and at least 8 GB of free space
@@ -29,8 +31,9 @@ executable matches the [supported revision](FINDINGS.md).
    is required. Your ISO is left unchanged. Setup also extracts the official Xbox
    360 PSU title icon for the desktop shortcut and launcher window.
 6. Open **Phantasy Star Universe Recompiled** on your desktop, or **PSU Launcher.exe**
-   in the installation folder. Click **Save & Play**, then choose offline story
-   mode in the game. Use **Continue** to load an existing save.
+   in the installation folder. Click **Save & Play**, then choose **Story Mode**
+   or **Extra Mode**. Use **New Game** to create an Extra Mode character, or
+   **Continue** to load an existing save for the selected mode.
 
 The installer supplies the native executable and runtime. Game assets come from
 your ISO; no ISO, original XEX, movies or other disc data are included in the download.
@@ -51,10 +54,33 @@ and [validation record](release/VALIDATION.md) for tested behavior and known iss
 - Change settings in the launcher before starting the game. Settings apply on the
   next launch; close the running game before starting another copy.
 
+### Extra Mode from the start
+
+Available in the preview.3 review build and current source.
+
+**Unlock Extra Mode and story-gated missions** is checked by default in both
+setup and the launcher. You can create your own offline character immediately
+and access mission availability normally tied to campaign progress. Character
+levels, mission level/rank requirements and earned rewards still follow the
+game's rules; this does not restore online services or online-only content.
+
+The option overrides availability checks without marking the story completed
+or writing campaign unlock flags. Uncheck it and relaunch to restore the game's
+normal story-based availability. Extra Mode characters use the game's normal
+save system. Save at a save point before closing the game.
+
+Mission difficulty is unchanged: Evacuation has level-10 enemies with no entry
+level requirement. Creature Discomfort starts at enemy level 5; Annihilation has
+level-35 enemies and requires a level-30 character.
+
+Developer launches enable this by default too. Pass
+`--psu_unlock_extra_mode=false` for original rules and
+`--psu_trace_extra_mode=true` to log the stored and effective availability values.
+
 ### Saves, updates and troubleshooting
 
 Saves are stored in **Documents\psu**, separate from the installation. Existing
-development-build saves use the same location. Graphics settings are stored in
+development-build saves use the same location. Launcher settings are stored in
 `settings.xml` beside the launcher, and logs are in the installation's `bin\logs`.
 
 To update, close the game and install the newer version into a **new folder**.
@@ -82,7 +108,7 @@ the native executable and patched GPU using the instructions below before packag
 ./tools/test-release.ps1 -IsoPath 'D:/Games/Phantasy Star Universe.iso'
 ```
 
-Output: `out/release/PSU-Recompiled-0.1.0-preview.2-win-x64/`, including a single
+Output: `out/release/PSU-Recompiled-0.1.0-preview.3-win-x64/`, including a single
 Setup.exe, source snapshot, build metadata, release notes, validation record and
 SHA-256 checksums. Use `-OutputDirectory` to choose a different artifact folder.
 Packaging stays local; this script does not publish a GitHub release.

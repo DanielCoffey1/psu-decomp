@@ -49,3 +49,33 @@ Section inventory from the loaded PE: .rdata, .pdata, .text, PSFD00, .data, .ida
 - Complete offline story gameplay and save/load.
 
 The executable has now been statically translated, compiled and run with native graphics, audio and input initialization. The title, menus, opening movie and first story map render with the custom GPU plugin. Movement and readable dialogue were observed in Clyez City. See STATUS.md for the limits of current native testing; emulator boot was not used as proof of recompilation progress.
+
+## Extra Mode availability (verified executable revision)
+
+The native script-binding table links `seq.open_ex_mode` to 0x822F7980, which
+sets the save manager's +0x52B8 flag through 0x8225F988. The reader at 0x8225FE40
+controls the Extra Mode title-menu entry. The optional runtime override returns
+true from this reader without changing the stored flag.
+
+`seq.set_ex_chapter_no` calls 0x82305F80, which clamps its zero-based chapter
+argument to 11. The per-location reader at 0x8225FDE8 reads one of 32 chapter
+values at save-manager +0x52BC, indexed by 0x823DBB08. The override returns 11 for
+availability queries. The campaign's setter calls the same reader with return
+address 0x82305FC4; that call must receive the real stored value so genuine story
+progress continues to be recorded. The ordinary story chapter reader and both
+save setters are left intact. `src/extra_mode.cpp` contains the two wrappers.
+
+A fresh-profile run reached Extra Mode character creation and My Room. Tracing
+showed stored access 0 / effective 1 and stored chapter 0 / effective 11. Read-only
+memory inspection still found a zero unlock flag, zero story-end flag and all
+32 stored Extra Mode chapter values at zero after entering the mode.
+
+The original disc mission definitions retain their original enemy levels. In the
+English `quest.ynr` from `xf_qe_off_fm_000_0.afs` (Evacuation), the main header's
++0x0C pointer identifies the 0x40-byte mission record; its +0x0A byte is 10.
+The corresponding values for `001` (Annihilation) and `100` (Creature Discomfort)
+are 35 and 5. Native accessor 0x82206170 retrieves this byte via 0x823E4358.
+Evacuation's original description says no prerequisites; Annihilation requires
+level 30. Enemy level and minimum entry level are distinct. These archives were
+only read for analysis, using the NBL format implementation in tenora-works at
+revision b8c05346d3c0e10a5774ec5beec1b7df265acfdd; no mission files were modified.

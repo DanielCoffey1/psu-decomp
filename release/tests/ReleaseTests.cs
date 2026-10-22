@@ -57,6 +57,12 @@ namespace PsuRelease {
                 var defaults = new Settings().Arguments(root);
                 Assert(defaults.Contains("--fullscreen=true") && defaults.Contains("--fullscreen_exclusive=false"), "Default is not borderless");
                 Assert(defaults.Contains("--vsync=true") && defaults.Contains("--video_mode_refresh_rate=60") && defaults.Contains("--psu_max_fps=0"), "Unsafe gameplay clock defaults");
+                Assert(defaults.Contains("--psu_unlock_extra_mode=true"), "Extra Mode is not available by default");
+                string extraSettings = Path.Combine(root, "extra-settings.xml");
+                new Settings { UnlockExtraMode = false }.Save(extraSettings);
+                Assert(Settings.Load(extraSettings).Arguments(root).Contains("--psu_unlock_extra_mode=false"), "Original Extra Mode rules did not persist");
+                File.WriteAllText(extraSettings, "<Settings><Width>1920</Width><Height>1080</Height><Scale>2</Scale><Fps>60</Fps></Settings>");
+                Assert(Settings.Load(extraSettings).UnlockExtraMode, "Older settings did not enable the new Extra Mode default");
                 Assert(Settings.Quote("a b\\") == "\"a b\\\\\"", "Trailing slash quoting");
                 Assert(Settings.Quote("a\"b") == "\"a\\\"b\"", "Embedded quote escaping");
                 string untouched = Path.Combine(root, "existing"); Directory.CreateDirectory(untouched); File.WriteAllText(Path.Combine(untouched, "keep"), "keep");

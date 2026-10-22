@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace PsuRelease {
     public static class Program {
-        public const string Version = "0.1.0-preview.2";
+        public const string Version = "0.1.0-preview.3";
         [STAThread] public static int Main(string[] args) {
             try {
                 // Headless installation uses the same validation and transactional path as the UI.
@@ -45,7 +45,7 @@ namespace PsuRelease {
         readonly string root = AppDomain.CurrentDomain.BaseDirectory;
         readonly TextBox iso = new TextBox(), folder = new TextBox();
         readonly ComboBox resolution = new ComboBox(), scale = new ComboBox(), fps = new ComboBox();
-        readonly CheckBox fullscreen = new CheckBox(), keyboard = new CheckBox(), shortcut = new CheckBox();
+        readonly CheckBox fullscreen = new CheckBox(), keyboard = new CheckBox(), extraMode = new CheckBox(), shortcut = new CheckBox();
         readonly Button primary = new Button(), cancel = new Button();
         readonly Label status = new Label(); readonly ProgressBar progress = new ProgressBar();
         readonly TableLayoutPanel body = new TableLayoutPanel();
@@ -77,8 +77,9 @@ namespace PsuRelease {
             foreach (var combo in new[] { resolution, scale, fps }) { combo.DropDownStyle = ComboBoxStyle.DropDownList; combo.Dock = DockStyle.Fill; }
             AddRow("Window resolution", resolution, 40); AddRow("Render scale", scale, 40); AddRow("Frame limit", fps, 40);
             fullscreen.Text = "Borderless windowed (fills the desktop)"; keyboard.Text = "Enable keyboard controls (controllers also supported)";
+            extraMode.Text = "Unlock Extra Mode and story-gated missions";
             shortcut.Text = "Create a desktop shortcut"; shortcut.Checked = true;
-            foreach (var check in new[] { fullscreen, keyboard }) { check.AutoSize = true; Wide(check, 31); }
+            foreach (var check in new[] { fullscreen, keyboard, extraMode }) { check.AutoSize = true; Wide(check, 31); }
             if (install) { shortcut.AutoSize = true; Wide(shortcut, 31); }
             Wide(new Label { Text = "4K rendering uses 3× scale. Movies retain their original resolution.\n120 FPS / unlocked are unavailable: testing showed sped-up gameplay.", AutoSize = true, ForeColor = Color.FromArgb(80, 86, 96) }, 50);
             progress.Dock = DockStyle.Fill; progress.Visible = install; Wide(progress, install ? 22 : 0);
@@ -93,6 +94,7 @@ namespace PsuRelease {
             if (!install) { try { value = Settings.Load(Path.Combine(root, "settings.xml")); } catch (Exception ex) { status.Text = "Settings reset: " + ex.Message; } }
             resolution.SelectedIndex = Array.IndexOf(Settings.Widths, value.Width); scale.SelectedIndex = value.Scale - 1;
             fps.SelectedIndex = Array.IndexOf(Settings.FrameRates, value.Fps); fullscreen.Checked = value.Fullscreen; keyboard.Checked = value.Keyboard;
+            extraMode.Checked = value.UnlockExtraMode;
             primary.Click += async (s, e) => { if (installing) await Install(); else Play(); };
             cancel.Click += (s, e) => {
                 if (installing) { if (busy) { cancellation.Cancel(); status.Text = "Cancelling and removing temporary files..."; cancel.Enabled = false; } else Close(); }
@@ -129,7 +131,7 @@ namespace PsuRelease {
                 else { using (var dialog = new FolderBrowserDialog { Description = "Select a parent folder. A new PSU Recompiled folder will be created inside it." }) if (dialog.ShowDialog(this) == DialogResult.OK) input.Text = Path.Combine(dialog.SelectedPath, "PSU Recompiled"); }
             };
         }
-        Settings GetSettings() { return new Settings { Width = Settings.Widths[resolution.SelectedIndex], Height = Settings.Heights[resolution.SelectedIndex], Scale = scale.SelectedIndex + 1, Fps = Settings.FrameRates[fps.SelectedIndex], Fullscreen = fullscreen.Checked, Keyboard = keyboard.Checked }; }
+        Settings GetSettings() { return new Settings { Width = Settings.Widths[resolution.SelectedIndex], Height = Settings.Heights[resolution.SelectedIndex], Scale = scale.SelectedIndex + 1, Fps = Settings.FrameRates[fps.SelectedIndex], Fullscreen = fullscreen.Checked, Keyboard = keyboard.Checked, UnlockExtraMode = extraMode.Checked }; }
         void Error(Exception ex) { status.Text = ex.Message; MessageBox.Show(this, ex.Message, "PSU Recompiled", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         async Task Install() {
             string source = iso.Text.Trim(), destination = folder.Text.Trim();

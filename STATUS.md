@@ -2,9 +2,9 @@
 
 Last tested: October 22, 2026, Windows x64, NVIDIA GeForce RTX 5090.
 
-The 0.1.0-preview.2 installer and launcher support local ISO extraction, desktop
-shortcuts with the game's official title icon, borderless windowed mode and up
-to 4K rendering. The launcher uses
+The local 0.1.0-preview.3 review installer and launcher support ISO extraction, desktop
+shortcuts with the game's official title icon, borderless windowed mode, up
+to 4K rendering and a default-on Extra Mode/mission availability option. The launcher uses
 60 FPS because the 120 FPS story test accelerated gameplay; normal-speed higher
 frame rates remain unfinished. See the [installation instructions](README.md#download-and-install-windows)
 and [release validation](release/VALIDATION.md).
@@ -19,6 +19,12 @@ and [release validation](release/VALIDATION.md).
 - Full title-screen rendering, including text and first-run save-data prompts.
 - Keyboard Start, confirmation and menu navigation.
 - Offline Story Mode selection and New Game selection.
+- Extra Mode unlocked on a separate profile with no story progress: character
+  creation, My Room, city access and entry into a free mission. Stored campaign
+  unlock and completion flags remained zero. Mission level requirements still apply.
+- Extra Mode's saved level-1 character reloaded into My Room after restarting.
+  Disabling the option removed Extra Mode from the title menu; re-enabling restored
+  access. The real story save remained unchanged during these isolated tests.
 - Opening movie playback and skipping into the first story map.
 - Clyez City 1st Floor: Central Table loads as a rendered 3D scene.
 - Player movement, HUD and nearby interaction prompts.

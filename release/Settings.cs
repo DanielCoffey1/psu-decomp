@@ -8,7 +8,7 @@ using System.Xml.Serialization;
 namespace PsuRelease {
     public sealed class Settings {
         public int Width = 1920, Height = 1080, Scale = 2, Fps = 60;
-        public bool Fullscreen = true, Keyboard = true;
+        public bool Fullscreen = true, Keyboard = true, UnlockExtraMode = true;
         public static readonly int[] Widths = {1280, 1920, 2560, 3840};
         public static readonly int[] Heights = {720, 1080, 1440, 2160};
         // PSU advances simulation per frame. Higher render rates currently speed
@@ -52,7 +52,8 @@ namespace PsuRelease {
                 "--render_target_path_d3d12=rov", "--fullscreen=" + Fullscreen.ToString().ToLowerInvariant(),
                 "--fullscreen_exclusive=false", "--video_mode_refresh_rate=60",
                 "--vsync=true", "--psu_max_fps=0", "--psu_movie_present=true",
-                "--mnk_mode=" + Keyboard.ToString().ToLowerInvariant()
+                "--mnk_mode=" + Keyboard.ToString().ToLowerInvariant(),
+                "--psu_unlock_extra_mode=" + UnlockExtraMode.ToString().ToLowerInvariant()
             };
             if (Keyboard) args.AddRange(new[] { "--keybind_start=Return", "--keybind_a=Space", "--keybind_b=Backspace", "--keybind_x=X", "--keybind_y=P", "--keybind_left_trigger=Q", "--keybind_right_trigger=E", "--keybind_rstick_press=V", "--keybind_dpad_up=I", "--keybind_dpad_down=K", "--keybind_dpad_left=J", "--keybind_dpad_right=L" });
             return args;

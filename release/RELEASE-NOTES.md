@@ -1,22 +1,34 @@
-# PSU Recompiled 0.1.0-preview.2 — experimental prerelease
+# PSU Recompiled 0.1.0-preview.3 — experimental review build
 
-Experimental Windows x64 native recompilation of the Xbox 360 offline story mode.
+Experimental Windows x64 native recompilation of the Xbox 360 offline modes.
 This is an early playable build; later chapters and a complete playthrough are
 not yet verified.
 
-This update uses the official Xbox 360 PSU title icon for installed desktop
-shortcuts and the launcher window. Setup extracts the original 64 × 64 artwork
-from your verified game executable locally; the artwork is not bundled in the
-installer or source repository. Gameplay and graphics settings are unchanged.
+This update adds **Unlock Extra Mode and story-gated missions**, enabled by
+default in setup and the launcher. Create a custom offline character immediately
+and use the mission availability normally unlocked through the campaign.
+Character levels and mission level/rank requirements still apply.
+
+The option changes availability checks, without writing campaign completion or
+unlock flags. Uncheck it and relaunch to restore normal story-based availability.
+Extra Mode uses the game's normal save system; save at a save point before quitting.
+This provides the disc's offline Extra Mode, not online services or online-only
+content. The official title icon, borderless mode and 60 FPS settings are retained.
 
 ## Install and play
 
-1. Download PSU-Recompiled-0.1.0-preview.2-win-x64-Setup.exe from the release's
-   Assets and run it: https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.2
+1. Run PSU-Recompiled-0.1.0-preview.3-win-x64-Setup.exe from this review package.
+   This build has not yet been published as a GitHub release.
 2. Browse to your USA/Europe Xbox 360 PSU ISO and choose a new installation folder.
 3. Choose graphics settings and click Install game. The installer verifies the
    executable revision, extracts your game data and creates a desktop shortcut.
 4. Use that shortcut to open the launcher, change settings and click Save & Play.
+5. Choose Extra Mode, then New Game to create a character, or Continue to load
+   one. Story Mode remains available separately.
+
+Mission difficulty is unchanged. Evacuation has level-10 enemies and no entry
+level requirement. Creature Discomfort starts at enemy level 5. Annihilation has
+level-35 enemies and requires a level-30 character.
 
 The installer includes a precompiled native executable, the patched GPU plugin,
 runtime libraries and notices. It extracts data from your ISO locally; installation

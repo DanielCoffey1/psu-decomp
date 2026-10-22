@@ -9,6 +9,7 @@ namespace PsuRelease {
     public sealed class Settings {
         public int Width = 1920, Height = 1080, Scale = 2, Fps = 60;
         public bool Fullscreen = true, Keyboard = true, UnlockExtraMode = true;
+        public bool SkipLauncher = false;
         public static readonly int[] Widths = {1280, 1920, 2560, 3840};
         public static readonly int[] Heights = {720, 1080, 1440, 2160};
         // PSU advances simulation per frame. Higher render rates currently speed

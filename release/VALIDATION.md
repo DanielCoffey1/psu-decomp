@@ -1,14 +1,34 @@
-# 0.1.0-preview.3 validation
+# 0.1.0-preview.4 validation
 
 Tested October 22, 2026 on Windows x64 with an NVIDIA GeForce RTX 5090.
 
-## Installer and launcher
+## Preview.4 installer and launcher
 
-- 39 automated checks passed, including real ISO verification, cancellation and
+- 42 automated checks passed, including real ISO verification, cancellation and
   rollback, existing-folder preservation, path validation, settings persistence,
-  DPI sizing, borderless defaults and rejection of unsupported frame rates. The
-  added checks cover Extra Mode's enabled default, persisted opt-out and migration
-  of older settings files.
+  DPI sizing, borderless defaults and rejection of unsupported frame rates. New
+  checks verify that direct launch is off for first/older installations, all
+  settings survive a round trip with direct launch enabled, and switching it off
+  preserves graphics settings.
+- A fresh preview.4 installation completed and created PSU Settings.lnk with
+  `--settings`, targeting that installation's launcher.
+- The new checkbox and recovery instructions fit in the launcher at the current
+  Windows display scaling. Save settings persisted `SkipLauncher=true`.
+- A normal subsequent start exited the launcher with code 0, started the native
+  game with the saved rendering, borderless, 60 FPS, input and Extra Mode values,
+  and reached the title screen. Save & Play with the checkbox enabled also
+  started the game and closed the launcher.
+- Starting again while the game was running opened the settings window with an
+  explanatory error and did not start a second game. PSU Settings.lnk reopened
+  settings with bypass still enabled and without starting the game.
+- The real story save's SHA-256 was unchanged after the launch checks. Holding
+  Shift as an alternate settings override was not separately exercised.
+
+## Previous preview.3 checks
+
+The following checks were completed for preview.3. This update changes the
+launcher and installer; the native game executable and GPU plugin are unchanged.
+
 - The icon extractor rejects an unsupported executable. The official 64 × 64
   title image from the real ISO loads as a Windows icon, and its PNG bytes match
   the original artwork's SHA-256 after wrapping in an ICO container.

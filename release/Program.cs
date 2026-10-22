@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace PsuRelease {
     public static class Program {
-        public const string Version = "0.1.0-preview.3";
+        public const string Version = "0.1.0-preview.4";
         [STAThread] public static int Main(string[] args) {
             try {
                 // Headless installation uses the same validation and transactional path as the UI.
@@ -23,12 +23,21 @@ namespace PsuRelease {
                     string root = AppDomain.CurrentDomain.BaseDirectory;
                     GameIcon.Install(root); Installer.RefreshShortcutIcons(root); return 0;
                 }
-                if (args.Length > 0) throw new ArgumentException("Unknown command-line option.");
+                bool forceSettings = args.Length == 1 && args[0] == "--settings";
+                if (args.Length > 0 && !forceSettings) throw new ArgumentException("Unknown command-line option.");
                 Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
 #if INSTALLER
                 Application.Run(new MainForm(true));
 #else
-                Application.Run(new MainForm(false));
+                string startupError = null;
+                try {
+                    var saved = Settings.Load(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.xml"));
+                    if (saved.SkipLauncher && !forceSettings && (Control.ModifierKeys & Keys.Shift) == 0) {
+                        using (var game = GameLauncher.Start(AppDomain.CurrentDomain.BaseDirectory, saved)) {}
+                        return 0;
+                    }
+                } catch (Exception ex) { startupError = "Could not start with saved settings: " + ex.Message; }
+                Application.Run(new MainForm(false, startupError));
 #endif
                 return 0;
             } catch (Exception ex) {
@@ -40,26 +49,25 @@ namespace PsuRelease {
     }
 
     public sealed class MainForm : Form {
-        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern uint GetDpiForSystem();
         readonly bool installing;
         readonly string root = AppDomain.CurrentDomain.BaseDirectory;
         readonly TextBox iso = new TextBox(), folder = new TextBox();
         readonly ComboBox resolution = new ComboBox(), scale = new ComboBox(), fps = new ComboBox();
-        readonly CheckBox fullscreen = new CheckBox(), keyboard = new CheckBox(), extraMode = new CheckBox(), shortcut = new CheckBox();
+        readonly CheckBox fullscreen = new CheckBox(), keyboard = new CheckBox(), extraMode = new CheckBox(), skipLauncher = new CheckBox(), shortcut = new CheckBox();
         readonly Button primary = new Button(), cancel = new Button();
         readonly Label status = new Label(); readonly ProgressBar progress = new ProgressBar();
         readonly TableLayoutPanel body = new TableLayoutPanel();
         CancellationTokenSource cancellation;
         Process game;
         bool busy;
-        public MainForm(bool install) {
+        public MainForm(bool install, string startupError = null) {
             SuspendLayout();
             installing = install; Text = install ? "PSU Recompiled — Install" : "PSU Recompiled — Launcher";
             string iconPath = Path.Combine(root, GameIcon.FileName);
             if (!install && File.Exists(iconPath)) using (var icon = new Icon(iconPath)) Icon = (Icon)icon.Clone();
             AutoScaleDimensions = new SizeF(96, 96); AutoScaleMode = AutoScaleMode.Dpi;
             Font = new Font("Segoe UI", 10); StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new Size(760, install ? 720 : 580); MinimumSize = new Size(650, 500);
+            ClientSize = new Size(760, install ? 720 : 650); MinimumSize = new Size(650, 500);
             BackColor = Color.FromArgb(247, 249, 252);
             body.Dock = DockStyle.Fill; body.Padding = new Padding(25); body.ColumnCount = 3;
             body.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); body.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -81,6 +89,10 @@ namespace PsuRelease {
             shortcut.Text = "Create a desktop shortcut"; shortcut.Checked = true;
             foreach (var check in new[] { fullscreen, keyboard, extraMode }) { check.AutoSize = true; Wide(check, 31); }
             if (install) { shortcut.AutoSize = true; Wide(shortcut, 31); }
+            else {
+                skipLauncher.Text = "Skip launcher next time (use saved settings)"; skipLauncher.AutoSize = true; Wide(skipLauncher, 31);
+                Wide(new Label { Text = "To change settings later, open PSU Settings in the installation folder,\nor hold Shift while opening your desktop shortcut.", AutoSize = true, ForeColor = Color.DimGray }, 50);
+            }
             Wide(new Label { Text = "4K rendering uses 3× scale. Movies retain their original resolution.\n120 FPS / unlocked are unavailable: testing showed sped-up gameplay.", AutoSize = true, ForeColor = Color.FromArgb(80, 86, 96) }, 50);
             progress.Dock = DockStyle.Fill; progress.Visible = install; Wide(progress, install ? 22 : 0);
             status.AutoSize = true; status.MaximumSize = new Size(620, 0); Wide(status, 50);
@@ -95,6 +107,8 @@ namespace PsuRelease {
             resolution.SelectedIndex = Array.IndexOf(Settings.Widths, value.Width); scale.SelectedIndex = value.Scale - 1;
             fps.SelectedIndex = Array.IndexOf(Settings.FrameRates, value.Fps); fullscreen.Checked = value.Fullscreen; keyboard.Checked = value.Keyboard;
             extraMode.Checked = value.UnlockExtraMode;
+            skipLauncher.Checked = value.SkipLauncher;
+            if (startupError != null) status.Text = startupError;
             primary.Click += async (s, e) => { if (installing) await Install(); else Play(); };
             cancel.Click += (s, e) => {
                 if (installing) { if (busy) { cancellation.Cancel(); status.Text = "Cancelling and removing temporary files..."; cancel.Enabled = false; } else Close(); }
@@ -131,7 +145,7 @@ namespace PsuRelease {
                 else { using (var dialog = new FolderBrowserDialog { Description = "Select a parent folder. A new PSU Recompiled folder will be created inside it." }) if (dialog.ShowDialog(this) == DialogResult.OK) input.Text = Path.Combine(dialog.SelectedPath, "PSU Recompiled"); }
             };
         }
-        Settings GetSettings() { return new Settings { Width = Settings.Widths[resolution.SelectedIndex], Height = Settings.Heights[resolution.SelectedIndex], Scale = scale.SelectedIndex + 1, Fps = Settings.FrameRates[fps.SelectedIndex], Fullscreen = fullscreen.Checked, Keyboard = keyboard.Checked, UnlockExtraMode = extraMode.Checked }; }
+        Settings GetSettings() { return new Settings { Width = Settings.Widths[resolution.SelectedIndex], Height = Settings.Heights[resolution.SelectedIndex], Scale = scale.SelectedIndex + 1, Fps = Settings.FrameRates[fps.SelectedIndex], Fullscreen = fullscreen.Checked, Keyboard = keyboard.Checked, UnlockExtraMode = extraMode.Checked, SkipLauncher = skipLauncher.Checked }; }
         void Error(Exception ex) { status.Text = ex.Message; MessageBox.Show(this, ex.Message, "PSU Recompiled", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         async Task Install() {
             string source = iso.Text.Trim(), destination = folder.Text.Trim();
@@ -156,22 +170,14 @@ namespace PsuRelease {
         void Play() {
             try {
                 if (game != null && !game.HasExited) { status.Text = "The game is already running."; return; }
-                // Several launcher windows must not start writers against the same save profile.
-                foreach (string processName in new[] { "psu", "psu-staged" }) {
-                    foreach (var running in Process.GetProcessesByName(processName)) {
-                        using (running) { if (!running.HasExited) { status.Text = "Close the running PSU game before launching another copy."; return; } }
-                    }
-                }
-                if (!File.Exists(Path.Combine(root, "installation.txt")) || DiscImage.HashFile(Path.Combine(root, "game", "default.xex")) != DiscImage.SupportedXex)
-                    throw new InvalidDataException("Installation is incomplete or the game executable does not match. Reinstall from your ISO into a new folder.");
                 var settings = GetSettings(); settings.Save(Path.Combine(root, "settings.xml"));
-                var desktop = Screen.PrimaryScreen.WorkingArea; double dpi = GetDpiForSystem();
-                var arguments = settings.Arguments(root, dpi, desktop.Width - (int)(32 * dpi / 96), desktop.Height - (int)(72 * dpi / 96));
-                game = new Process { StartInfo = new ProcessStartInfo(Path.Combine(root, "bin", "psu.exe"), Settings.CommandLine(arguments)) { WorkingDirectory = Path.Combine(root, "bin"), UseShellExecute = false }, EnableRaisingEvents = true };
+                if (game != null) { game.Dispose(); game = null; }
+                game = GameLauncher.Start(root, settings);
+                if (settings.SkipLauncher) { game.Dispose(); game = null; Close(); return; }
                 game.Exited += (s, e) => { if (!IsDisposed && IsHandleCreated) BeginInvoke((Action)(() => { primary.Enabled = true; status.Text = game.ExitCode == 0 ? "Game closed. Your saves remain in Documents\\psu." : "Game exited with code " + game.ExitCode + ". See bin\\logs in your installation folder."; })); };
                 primary.Enabled = false;
-                if (!game.Start()) throw new IOException("The game could not be started.");
                 status.Text = "Game running. Settings apply on the next launch.";
+                game.EnableRaisingEvents = true;
             } catch (Exception ex) { primary.Enabled = true; Error(ex); }
         }
     }

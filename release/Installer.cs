@@ -43,9 +43,11 @@ namespace PsuRelease {
                 cancel.ThrowIfCancellationRequested();
                 Directory.Move(staging, destination); created = false;
                 string warning = "";
+                try { CreateSettingsShortcut(destination); }
+                catch (Exception ex) { warning = "Installed successfully, but PSU Settings could not be created: " + ex.Message + "\nHold Shift while opening the launcher to change settings.\n"; }
                 if (shortcut) {
                     try { CreateShortcut(destination); }
-                    catch (Exception ex) { warning = "Installed successfully, but the desktop shortcut could not be created: " + ex.Message + "\nOpen PSU Launcher.exe in the installation folder."; }
+                    catch (Exception ex) { warning += "Installed successfully, but the desktop shortcut could not be created: " + ex.Message + "\nOpen PSU Launcher.exe in the installation folder."; }
                 }
                 progress(100, "Installation complete."); return warning;
             } finally {
@@ -83,6 +85,12 @@ namespace PsuRelease {
             string path = Path.Combine(desktop, "Phantasy Star Universe Recompiled.lnk");
             // Do not replace a user's existing shortcut to another installation.
             if (File.Exists(path)) path = Path.Combine(desktop, "Phantasy Star Universe Recompiled " + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".lnk");
+            WriteShortcut(root, path, "", "Play PSU Recompiled or change graphics settings");
+        }
+        public static void CreateSettingsShortcut(string root) {
+            WriteShortcut(root, Path.Combine(root, "PSU Settings.lnk"), "--settings", "Change PSU Recompiled settings");
+        }
+        static void WriteShortcut(string root, string path, string arguments, string description) {
             Type type = Type.GetTypeFromProgID("WScript.Shell"); object shell = Activator.CreateInstance(type);
             object link = null;
             try {
@@ -90,7 +98,8 @@ namespace PsuRelease {
                 Type lt = link.GetType();
                 lt.InvokeMember("TargetPath", BindingFlags.SetProperty, null, link, new object[] { Path.Combine(root, "PSU Launcher.exe") });
                 lt.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, link, new object[] { root });
-                lt.InvokeMember("Description", BindingFlags.SetProperty, null, link, new object[] { "Play PSU Recompiled or change graphics settings" });
+                lt.InvokeMember("Arguments", BindingFlags.SetProperty, null, link, new object[] { arguments });
+                lt.InvokeMember("Description", BindingFlags.SetProperty, null, link, new object[] { description });
                 lt.InvokeMember("IconLocation", BindingFlags.SetProperty, null, link, new object[] { Path.Combine(root, GameIcon.FileName) + ",0" });
                 lt.InvokeMember("Save", BindingFlags.InvokeMethod, null, link, null);
             } finally {

@@ -1,11 +1,18 @@
-# PSU Recompiled 0.1.0-preview.3 — experimental prerelease
+# PSU Recompiled 0.1.0-preview.4 — experimental review build
 
 Experimental Windows x64 native recompilation of the Xbox 360 offline modes.
 This is an early playable build; later chapters and a complete playthrough are
 not yet verified.
 
-This update adds **Unlock Extra Mode and story-gated missions**, enabled by
-default in setup and the launcher. Create a custom offline character immediately
+This update adds **Skip launcher next time (use saved settings)**. Check it and
+click Save settings or Save & Play; future desktop-shortcut launches start the
+game with all saved settings. Open **PSU Settings** in the installation folder
+to change them again, or hold Shift while opening your desktop shortcut. The
+`--settings` launcher argument also opens settings. Startup errors return to the
+launcher. The option is off by default, including when updating older settings.
+
+**Unlock Extra Mode and story-gated missions**, introduced in preview.3, remains
+enabled by default. Create a custom offline character immediately
 and use the mission availability normally unlocked through the campaign.
 Character levels and mission level/rank requirements still apply.
 
@@ -17,9 +24,9 @@ content. The official title icon, borderless mode and 60 FPS settings are retain
 
 ## Install and play
 
-1. Download **PSU-Recompiled-0.1.0-preview.3-win-x64-Setup.exe** from this
-   [prerelease's Assets](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.3)
-   and run it. The source ZIP is for developers and does not install the game.
+1. Run **PSU-Recompiled-0.1.0-preview.4-win-x64-Setup.exe** from this review
+   package. It has not been published as a GitHub release. The source ZIP is for
+   developers and does not install the game.
 2. Browse to your USA/Europe Xbox 360 PSU ISO and choose a new installation folder.
 3. Choose graphics settings and click Install game. The installer verifies the
    executable revision, extracts your game data and creates a desktop shortcut.

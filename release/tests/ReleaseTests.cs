@@ -63,6 +63,12 @@ namespace PsuRelease {
                 Assert(Settings.Load(extraSettings).Arguments(root).Contains("--psu_unlock_extra_mode=false"), "Original Extra Mode rules did not persist");
                 File.WriteAllText(extraSettings, "<Settings><Width>1920</Width><Height>1080</Height><Scale>2</Scale><Fps>60</Fps></Settings>");
                 Assert(Settings.Load(extraSettings).UnlockExtraMode, "Older settings did not enable the new Extra Mode default");
+                Assert(!Settings.Load(extraSettings).SkipLauncher && !Settings.Load(Path.Combine(root, "no-settings.xml")).SkipLauncher, "First or older installations unexpectedly skip the launcher");
+                new Settings { Width = 3840, Height = 2160, Scale = 3, Fps = 60, Fullscreen = false, Keyboard = false, UnlockExtraMode = false, SkipLauncher = true }.Save(extraSettings);
+                var remembered = Settings.Load(extraSettings);
+                Assert(remembered.SkipLauncher && remembered.Width == 3840 && remembered.Height == 2160 && remembered.Scale == 3 && remembered.Fps == 60 && !remembered.Fullscreen && !remembered.Keyboard && !remembered.UnlockExtraMode, "Direct launch preference lost saved settings");
+                remembered.SkipLauncher = false; remembered.Save(extraSettings);
+                Assert(!Settings.Load(extraSettings).SkipLauncher && Settings.Load(extraSettings).Scale == 3, "Disabling direct launch lost graphics settings");
                 Assert(Settings.Quote("a b\\") == "\"a b\\\\\"", "Trailing slash quoting");
                 Assert(Settings.Quote("a\"b") == "\"a\\\"b\"", "Embedded quote escaping");
                 string untouched = Path.Combine(root, "existing"); Directory.CreateDirectory(untouched); File.WriteAllText(Path.Combine(untouched, "keep"), "keep");

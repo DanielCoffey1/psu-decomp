@@ -77,6 +77,15 @@ Developer launches enable this by default too. Pass
 
 ### Saves, updates and troubleshooting
 
+The launcher remembers all settings when you click **Save settings** or
+**Save & Play**. Starting with the preview.4 review build, check **Skip launcher
+next time (use saved settings)** to start the game directly from the desktop
+shortcut. This is off by default. To change settings again, open **PSU Settings**
+in the installation folder, or hold **Shift** while opening the desktop shortcut.
+You can also run `"PSU Launcher.exe" --settings`. Uncheck the option and save to
+restore the normal launcher. Missing or invalid settings and startup errors bring
+the settings window back. This feature is not included in published preview.3.
+
 Saves are stored in **Documents\psu**, separate from the installation. Existing
 development-build saves use the same location. Launcher settings are stored in
 `settings.xml` beside the launcher, and logs are in the installation's `bin\logs`.
@@ -106,7 +115,7 @@ the native executable and patched GPU using the instructions below before packag
 ./tools/test-release.ps1 -IsoPath 'D:/Games/Phantasy Star Universe.iso'
 ```
 
-Output: `out/release/PSU-Recompiled-0.1.0-preview.3-win-x64/`, including a single
+Output: `out/release/PSU-Recompiled-0.1.0-preview.4-win-x64/`, including a single
 Setup.exe, source snapshot, build metadata, release notes, validation record and
 SHA-256 checksums. Use `-OutputDirectory` to choose a different artifact folder.
 Packaging stays local; this script does not publish a GitHub release.

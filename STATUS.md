@@ -2,14 +2,14 @@
 
 Last tested: October 22, 2026, Windows x64, NVIDIA GeForce RTX 5090.
 
-The published 0.1.0-preview.3 installer and launcher support local ISO extraction, desktop
+The 0.1.0-preview.4 installer and launcher support local ISO extraction, desktop
 shortcuts with the game's official title icon, borderless windowed mode, up
 to 4K rendering and a default-on Extra Mode/mission availability option. The launcher uses
 60 FPS because the 120 FPS story test accelerated gameplay; normal-speed higher
 frame rates remain unfinished. See the [installation instructions](README.md#download-and-install-windows)
 and [release validation](release/VALIDATION.md).
 
-The preview.4 review build adds an optional direct launch with saved settings.
+Preview.4 adds an optional direct launch with saved settings.
 The installation's PSU Settings shortcut, `--settings`, or holding Shift opens
 the launcher again. Startup errors also return to the settings window.
 

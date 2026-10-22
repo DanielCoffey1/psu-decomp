@@ -6,7 +6,7 @@ Game PowerPC instructions are translated ahead of time to C++ and compiled into 
 
 ## Download and install (Windows)
 
-Download the installer from the [0.1.0-preview.3 prerelease](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.3).
+Download the installer from the [0.1.0-preview.4 prerelease](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.4).
 This repository is private, so you must be signed in to a GitHub account with access.
 
 You need Windows 10/11 x64, .NET Framework 4.8, a Direct3D 12 GPU, your own
@@ -16,7 +16,7 @@ requires GPU rasterizer-ordered-view (ROV) support. Setup checks that the ISO's
 executable matches the [supported revision](FINDINGS.md).
 
 1. In the release's **Assets**, download
-   **PSU-Recompiled-0.1.0-preview.3-win-x64-Setup.exe**. The source ZIP is for
+   **PSU-Recompiled-0.1.0-preview.4-win-x64-Setup.exe**. The source ZIP is for
    developers; it does not install the game.
 2. Run the installer and click **Browse...** beside **Game ISO** to select your ISO.
    You do not need to mount or extract it first.
@@ -78,13 +78,13 @@ Developer launches enable this by default too. Pass
 ### Saves, updates and troubleshooting
 
 The launcher remembers all settings when you click **Save settings** or
-**Save & Play**. Starting with the preview.4 review build, check **Skip launcher
+**Save & Play**. Starting with preview.4, check **Skip launcher
 next time (use saved settings)** to start the game directly from the desktop
 shortcut. This is off by default. To change settings again, open **PSU Settings**
 in the installation folder, or hold **Shift** while opening the desktop shortcut.
 You can also run `"PSU Launcher.exe" --settings`. Uncheck the option and save to
 restore the normal launcher. Missing or invalid settings and startup errors bring
-the settings window back. This feature is not included in published preview.3.
+the settings window back.
 
 Saves are stored in **Documents\psu**, separate from the installation. Existing
 development-build saves use the same location. Launcher settings are stored in

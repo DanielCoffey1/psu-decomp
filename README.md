@@ -7,7 +7,7 @@ Game PowerPC instructions are translated ahead of time to C++ and compiled into 
 ## Download and install (Windows)
 
 Download the installer from the [0.1.0-preview.4 prerelease](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.4).
-This repository is private, so you must be signed in to a GitHub account with access.
+The repository and release downloads are public; no GitHub account is required.
 
 You need Windows 10/11 x64, .NET Framework 4.8, a Direct3D 12 GPU, your own
 USA/Europe Xbox 360 **Phantasy Star Universe ISO**, and at least 8 GB of free space

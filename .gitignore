@@ -11,3 +11,17 @@
 *.nbl
 *.adx
 *.sfd
+
+# Local credentials, user settings and diagnostic output.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+*.dmp
+/settings.xml
+/CMakeUserPresets.json
+/.vs/

@@ -10,6 +10,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(generated/rexglue.cmake)
 
+# Keep local account names and checkout locations out of diagnostic strings.
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    get_filename_component(PSU_SDK_ROOT "${rexglue_DIR}/../../.." ABSOLUTE)
+    add_compile_options("-ffile-prefix-map=${CMAKE_CURRENT_SOURCE_DIR}=psu"
+                        "-ffile-prefix-map=${PSU_SDK_ROOT}=rexglue-sdk")
+endif()
+
 # Sources
 set(PSU_SOURCES
     src/main.cpp

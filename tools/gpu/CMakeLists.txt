@@ -6,6 +6,12 @@ find_package(rexglue CONFIG REQUIRED)
 if(NOT REXGLUE_ROOT)
   message(FATAL_ERROR "Pass the pinned ReXGlue source checkout as REXGLUE_ROOT")
 endif()
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+  get_filename_component(PSU_SDK_ROOT "${rexglue_DIR}/../../.." ABSOLUTE)
+  add_compile_options("-ffile-prefix-map=${REXGLUE_ROOT}=rexglue"
+                      "-ffile-prefix-map=${PSU_SDK_ROOT}=rexglue-sdk"
+                      "-ffile-prefix-map=${CMAKE_CURRENT_SOURCE_DIR}=psu/tools/gpu")
+endif()
 set(REXGLUE_USE_D3D12 ON)
 set(REXGLUE_USE_VULKAN OFF)
 add_library(rexruntime ALIAS rex::runtime)

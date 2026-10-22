@@ -59,6 +59,7 @@ $dirty = [bool](git -C $root status --porcelain)
     required_xex_sha256 = '93d208ee55cc89265fbc6b9e95b1cf34ae364e47df713cd9f3e8adf6101c825e'
     build_utc = [DateTime]::UtcNow.ToString('o')
 } | ConvertTo-Json | Set-Content -LiteralPath "$payload/build-info.json" -Encoding utf8
+& "$PSScriptRoot/check-release-privacy.ps1" -Root $payload
 $checksums = Get-ChildItem $payload -File -Recurse | Sort-Object FullName | ForEach-Object {
     (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' + [IO.Path]::GetRelativePath($payload, $_.FullName).Replace('\', '/')
 }
@@ -83,6 +84,7 @@ foreach ($relative in ($files | Sort-Object -Unique)) {
     New-Item -ItemType Directory -Path (Split-Path $destination -Parent) -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $root $relative) -Destination $destination
 }
+& "$PSScriptRoot/check-release-privacy.ps1" -Root $sourceFolder
 $sourceZip = "$output/$name-source.zip"
 if (Test-Path -LiteralPath $sourceZip) { Remove-Item -LiteralPath $sourceZip }
 [IO.Compression.ZipFile]::CreateFromDirectory($sourceFolder, $sourceZip, [IO.Compression.CompressionLevel]::Optimal, $false)

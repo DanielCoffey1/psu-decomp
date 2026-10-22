@@ -1,0 +1,14 @@
+title = "PSU source secret scanning"
+
+[extend]
+useDefault = true
+
+# These are pinned SDK file digests, not API keys. Keep the exception limited
+# to the generic detector, this manifest, and complete SHA-256 entry lines.
+[[allowlists]]
+description = "Pinned SDK SHA-256 checksums"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^tools/sdk-lock\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"(?:archive_sha256|(?:bin|cmake|include|lib|share)/[^"\r\n]+)"\s*:\s*"[a-fA-F0-9]{64}"\s*,?\s*$''']

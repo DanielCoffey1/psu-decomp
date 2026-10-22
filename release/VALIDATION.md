@@ -2,6 +2,17 @@
 
 Tested October 22, 2026 on Windows x64 with an NVIDIA GeForce RTX 5090.
 
+## Public-release privacy rebuild
+
+The preview.1 through preview.4 downloads were rebuilt before public release
+to remove embedded local source paths. Their original installer test suites
+passed again (33, 36, 39 and 42 checks respectively), including real ISO
+verification. The path guard passed eight positive/negative encoding cases.
+A fresh preview.4 installation succeeded and its rebuilt native executable and
+GPU plugin rendered the title screen using an isolated profile. The game and
+launcher source logic remains unchanged. See [PRIVACY-REPACK.md](PRIVACY-REPACK.md)
+for the replacement downloads' provenance and changed checksums.
+
 ## Preview.4 installer and launcher
 
 - 42 automated checks passed, including real ISO verification, cancellation and

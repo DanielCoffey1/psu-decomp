@@ -4,6 +4,11 @@ Experimental Windows x64 native recompilation of the Xbox 360 offline modes.
 This is an early playable build; later chapters and a complete playthrough are
 not yet verified.
 
+The public downloads were rebuilt to remove embedded local build paths. Use
+the current SHA256SUMS.txt; checksums from earlier private downloads have
+changed. Version-specific features are retained. See
+[PRIVACY-REPACK.md](PRIVACY-REPACK.md) for build provenance.
+
 This update adds **Skip launcher next time (use saved settings)**. Check it and
 click Save settings or Save & Play; future desktop-shortcut launches start the
 game with all saved settings. Open **PSU Settings** in the installation folder

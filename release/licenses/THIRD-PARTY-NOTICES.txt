@@ -1,6 +1,6 @@
 Third-party notices for the pinned ReXGlue runtime and PSU GPU plugin.
 
-The following source revisions and license texts accompany this review build:
+The following source revisions and license texts accompany this prerelease:
 sdl3-LICENSE.txt.txt - https://github.com/libsdl-org/SDL/tree/147a8ee32dbf9ac02f3794964490687b6bbda1bc
 fmt-LICENSE.txt - https://github.com/fmtlib/fmt/tree/407c905e45ad75fc29bf0f9bb7c5c2fd3475976f
 spdlog-LICENSE.txt - https://github.com/gabime/spdlog/tree/79524ddd08a4ec981b7fea76afd08ee05f83755d

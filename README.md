@@ -6,10 +6,8 @@ Game PowerPC instructions are translated ahead of time to C++ and compiled into 
 
 ## Download and install (Windows)
 
-Download the current published installer from the [0.1.0-preview.2 prerelease](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.2).
+Download the installer from the [0.1.0-preview.3 prerelease](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.3).
 This repository is private, so you must be signed in to a GitHub account with access.
-The Extra Mode unlock described below is new in the **0.1.0-preview.3 review
-build** and source; it is not included in the published preview.2 installer.
 
 You need Windows 10/11 x64, .NET Framework 4.8, a Direct3D 12 GPU, your own
 USA/Europe Xbox 360 **Phantasy Star Universe ISO**, and at least 8 GB of free space
@@ -18,7 +16,7 @@ requires GPU rasterizer-ordered-view (ROV) support. Setup checks that the ISO's
 executable matches the [supported revision](FINDINGS.md).
 
 1. In the release's **Assets**, download
-   **PSU-Recompiled-0.1.0-preview.2-win-x64-Setup.exe**. The source ZIP is for
+   **PSU-Recompiled-0.1.0-preview.3-win-x64-Setup.exe**. The source ZIP is for
    developers; it does not install the game.
 2. Run the installer and click **Browse...** beside **Game ISO** to select your ISO.
    You do not need to mount or extract it first.
@@ -56,7 +54,7 @@ and [validation record](release/VALIDATION.md) for tested behavior and known iss
 
 ### Extra Mode from the start
 
-Available in the preview.3 review build and current source.
+Available starting with preview.3.
 
 **Unlock Extra Mode and story-gated missions** is checked by default in both
 setup and the launcher. You can create your own offline character immediately

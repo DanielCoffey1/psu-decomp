@@ -1,4 +1,4 @@
-# PSU Recompiled 0.1.0-preview.3 — experimental review build
+# PSU Recompiled 0.1.0-preview.3 — experimental prerelease
 
 Experimental Windows x64 native recompilation of the Xbox 360 offline modes.
 This is an early playable build; later chapters and a complete playthrough are
@@ -17,8 +17,9 @@ content. The official title icon, borderless mode and 60 FPS settings are retain
 
 ## Install and play
 
-1. Run PSU-Recompiled-0.1.0-preview.3-win-x64-Setup.exe from this review package.
-   This build has not yet been published as a GitHub release.
+1. Download **PSU-Recompiled-0.1.0-preview.3-win-x64-Setup.exe** from this
+   [prerelease's Assets](https://github.com/DanielCoffey1/psu-decomp/releases/tag/v0.1.0-preview.3)
+   and run it. The source ZIP is for developers and does not install the game.
 2. Browse to your USA/Europe Xbox 360 PSU ISO and choose a new installation folder.
 3. Choose graphics settings and click Install game. The installer verifies the
    executable revision, extracts your game data and creates a desktop shortcut.

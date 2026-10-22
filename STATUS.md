@@ -2,7 +2,7 @@
 
 Last tested: October 22, 2026, Windows x64, NVIDIA GeForce RTX 5090.
 
-The local 0.1.0-preview.3 review installer and launcher support ISO extraction, desktop
+The 0.1.0-preview.3 installer and launcher support local ISO extraction, desktop
 shortcuts with the game's official title icon, borderless windowed mode, up
 to 4K rendering and a default-on Extra Mode/mission availability option. The launcher uses
 60 FPS because the 120 FPS story test accelerated gameplay; normal-speed higher

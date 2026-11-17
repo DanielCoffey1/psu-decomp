@@ -27,6 +27,7 @@ set(PSU_SOURCES
 
 if(WIN32)
     add_executable(psu WIN32 ${PSU_SOURCES})
+    target_link_libraries(psu PRIVATE ws2_32)
 else()
     add_executable(psu ${PSU_SOURCES})
 endif()

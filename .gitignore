@@ -25,3 +25,4 @@
 /settings.xml
 /CMakeUserPresets.json
 /.vs/
+__pycache__/

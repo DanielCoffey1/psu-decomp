@@ -3,6 +3,33 @@
 $ErrorActionPreference='Stop'
 $generated=Join-Path $PSScriptRoot '../generated/default'
 $files=Get-ChildItem -LiteralPath $generated -Filter 'psu_recomp.*.cpp'
+# ReXGlue returns valid handles with the high bit set. Only INVALID_SOCKET is an error.
+$socketBranches=@(
+    @('825B1F38','!ctx.cr0.lt','REX_LOAD_U32(ctx.r31.u32 + 4) != UINT32_MAX'),
+    @('825B1DBC','!ctx.cr0.lt','REX_LOAD_U32(ctx.r31.u32 + 4) != UINT32_MAX'),
+    @('825B1DE0','!ctx.cr6.lt','ctx.r11.u32 != UINT32_MAX'),
+    @('825B14F8','!ctx.cr6.lt','ctx.r30.u32 != UINT32_MAX'),
+    @('825B1420','!ctx.cr6.lt','ctx.r30.u32 != UINT32_MAX'),
+    @('825B1748','ctx.cr6.lt','ctx.r11.u32 == UINT32_MAX'),
+    @('825B1770','ctx.cr6.lt','ctx.r11.u32 == UINT32_MAX'),
+    @('825B1950','!ctx.cr0.lt','ctx.r3.u32 != UINT32_MAX'),
+    @('825B169C','ctx.cr0.lt','ctx.r3.u32 == UINT32_MAX'),
+    @('825B1838','ctx.cr6.lt','ctx.r11.u32 == UINT32_MAX')
+)
+foreach ($branch in $socketBranches) {
+    $label,$oldCondition,$newCondition=$branch
+    $socket=@($files | Select-String -SimpleMatch "loc_${label}:" | Select-Object -ExpandProperty Path -Unique)
+    if ($socket.Count -ne 1) { throw "Expected one translated TCP branch target $label." }
+    $socketText=[IO.File]::ReadAllText($socket[0])
+    $socketBranch="if ($oldCondition) goto loc_$label;"
+    $socketFix="if ($newCondition) goto loc_$label;"
+    if (!$socketText.Contains($socketFix)) {
+        if ([regex]::Matches($socketText,[regex]::Escape($socketBranch)).Count -ne 1) {
+            throw "Unexpected TCP socket result branch to $label."
+        }
+        [IO.File]::WriteAllText($socket[0],$socketText.Replace($socketBranch,$socketFix))
+    }
+}
 $parent=@($files | Where-Object { [IO.File]::ReadAllText($_.FullName).Contains('DEFINE_REX_FUNC(sub_826380E8)') })
 $child=@($files | Where-Object { [IO.File]::ReadAllText($_.FullName).Contains('DEFINE_REX_FUNC(sub_82638260)') })
 if ($parent.Count -ne 1 -or $child.Count -ne 1) { throw 'Expected unique loop entry points.' }

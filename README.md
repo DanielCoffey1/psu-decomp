@@ -181,4 +181,12 @@ Callback candidates require review before adding manifest hints. Loaded variable
 - [Xenia Canary XPS fix](https://github.com/xenia-canary/xenia-canary/commit/22708301ba76d10aae6f7d7caac8b1cac9e4a8e6): reference for physical address masking. The prototype does not incorporate that commit's full runtime heap implementation.
 - [tenora-works](https://github.com/Agrathejagged/tenora-works): PSU format research.
 
-ReXGlue and Xenia notices are retained in [third_party/rexglue-LICENSE.txt](third_party/rexglue-LICENSE.txt). Online services remain outside the initial offline story-mode scope.
+ReXGlue and Xenia notices are retained in [third_party/rexglue-LICENSE.txt](third_party/rexglue-LICENSE.txt).
+
+## Experimental community network
+
+The original **Xbox Live** menu can now join a shared Colony lobby through a
+private community connection profile. Two native game clients have been verified
+joining, seeing each other, relaying movement and removing a disconnected player.
+This is an early lobby implementation; public hosting, missions, combat, chat and
+area transitions are still pending. See [network setup and verification](STATUS.md#network-mode).

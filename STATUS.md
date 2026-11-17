@@ -128,3 +128,158 @@ and the plugin builds successfully. Temporary GPU capture code is excluded.
 This is an early playable story-mode prototype. These checks do not establish a complete playthrough, exhaustive combat or save/load correctness, or a finished port.
 
 Logs and diagnostic dumps stay local. Source-generated game translations and binaries are excluded from Git.
+
+## Network Mode
+
+Two native Release game clients now join the same Colony lobby through the
+original Xbox Live menu using separate authenticated community profiles. On
+November 16, both rendered the other character; the user's sustained movement
+of character A appeared in the second client, with matching remote coordinates.
+Closing the second client removed its character while A stayed connected.
+This verification used two processes on one Windows PC. Internet hosting and
+cross-computer testing are still pending. Missions, combat, inventory, chat,
+parties and travel between areas are not implemented.
+
+Verified with the supported retail Xbox 360 executable and native Release build:
+
+- Select **Xbox Live** with the development profile enabled to connect to the
+  loopback server, complete login and redeem a one-time game-session ticket.
+- Create a character using the original editor. Name validation completes locally;
+  the game sends a 324-byte `0D02` packet, including its 316-byte character body.
+- Restart the client and server: the saved name, level and appearance reappear in
+  the character-selection screen. Character records persist in SQLite.
+- Stay in the editor for several minutes without disconnecting. The server sends
+  keepalives every five seconds after authentication.
+- Restart the server while at character selection and choose **Retry**: the client
+  reconnects and reloads the saved character without restarting the executable.
+- Select **Enter** with the server's `--game-data` option: the client loads the
+  disc's native Colony lobby, renders the saved character with 100/100 HP and
+  accepts movement. Matching the player's quest ID to the archive's actual ID
+  (13001) fixed the invisible avatar; Xbox status fields also differ from PS2.
+
+### Shared community lobby
+
+The community server has a 16-player lobby limit (two native clients tested),
+separate character storage per account, one-time login tickets, a TLS listener
+and per-player private connection profiles. The loopback adapter checks the
+server's certificate fingerprint before sending the profile token. The original
+Xbox Live menu connects through that adapter; no Microsoft account is used.
+
+Build the native client and GPU plugin, install Python 3.11 or newer, then create
+the first profile. Initial certificate generation also requires `cryptography`:
+
+```powershell
+python -m pip install cryptography
+python ./tools/run-community-server.py add-player --profile ./local/community/player.json
+python ./tools/run-community-server.py serve --game-data ./local
+```
+
+In another terminal:
+
+```powershell
+python ./tools/run-network.py --game-data ./local
+```
+
+Choose **Xbox Live**, select/create a character, then **Enter**. The launcher
+starts its own adapter, verifies the server, and closes the adapter when the game
+exits. It reports a missing server, rejected certificate or occupied adapter port
+before launching the game. `--check` checks assets and connectivity without
+starting the game; `--controller` uses controller input; `--trace` enables network
+diagnostics. The game-data directory must contain the extracted `default.xex`
+and `DATA` directory. Client settings and caches are isolated beside its profile.
+
+For a second client on the same PC, create a different account and adapter port:
+
+```powershell
+python ./tools/run-community-server.py add-player --profile ./local/community/second.json
+python ./tools/run-network.py --profile ./local/community/second.json --bridge-port 15022 --game-data ./local
+```
+
+Profiles contain credentials: distribute each one only to its intended player.
+The server keeps only token hashes. The default state, profiles, certificates and
+character databases remain under ignored `local/community/`. Preserve that state
+when moving the server. See [deployment instructions](deploy/community/README.md)
+for the Linux service and public endpoint configuration.
+
+Six community integration tests pass with `python ./tools/test-community-server.py`.
+They cover account isolation and restart persistence, cross-account/replayed
+tickets, concurrent fragmented world loading, spawn/movement/disconnect/rejoin,
+invalid movement, adapter login, and wrong token/certificate rejection. The full
+capacity check connects 16 TLS protocol clients, verifies mutual spawn records,
+rejects a 17th player, and admits that player after a vacancy opens. This is a
+functional capacity test on the development PC, not a hosted performance test. Native
+verification additionally covered remote spawn, movement and removal, a nonzero
+local player ID, separate adapters, and launcher cleanup after game exit.
+
+Xbox remote avatars need `location[18] = 1` and a matching quest/zone/map in the
+transform at location offsets 64/68/72. Without these fields, the client creates
+the character at `(0, -10000, 0)` and culls it. The packet regression test now
+checks both fields and the announced position.
+
+### Original single-account probe
+
+Build the client and GPU plugin with the normal repository tools, then start:
+
+```powershell
+python ./tools/run-network-probe.py --login-test --game-data ./local
+```
+
+In another terminal, launch:
+
+```powershell
+./tools/run.ps1 --psu_trace_network=true --psu_network_dev_profile=true
+```
+
+Both switches default to false. The server binds only `127.0.0.1:15020`, uses one
+shared development account and handles one active connection at a time. The
+short-lived session ticket is a protocol test, not production authentication.
+There are no firewall changes or public endpoints. Character storage defaults to
+`local/network-probe/characters.sqlite3`; `--state-dir PATH` selects a separate
+local test database. Without `--login-test`, the probe only counts incoming bytes.
+
+Use `python ./tools/test-network-probe.py` for the TCP integration checks. They
+cover split/coalesced frames, login handoff, idle keepalives beyond the old login
+timeout, ticket replay rejection, malformed frames, character persistence across
+server restart, initial character-load replies, invalid character records and
+acknowledged lobby fragments with interleaved TCP commands. Six tests pass,
+including after the account-storage migration. Real-client verification covers
+the editor, persisted character, Retry, lobby rendering and user-confirmed movement;
+synthetic tests alone do not establish compatibility.
+
+The November 15 pause checkpoint has been superseded by the verified community
+lobby above. The latest machine-specific handoff is
+`local/network-resume-2026-11-16.md` (ignored by Git).
+
+### Compatibility repairs
+
+The pinned ReXGlue runtime supplies regular TCP sockets, but this disc also needs
+Xbox sign-in, privileges, service discovery, title-server discovery and XNet calls
+that the runtime does not fully implement. The opt-in profile supplies the local
+responses at the specific call sites used by this executable. The service-info
+layout was cross-checked against the
+[Xenia Canary definition](https://github.com/AdrianCassar/xenia-canary/blob/netplay_canary_experimental/src/xenia/kernel/xnet.h).
+
+The code-generation repair compares socket handles with the invalid sentinel;
+valid ReXGlue handles have their high bit set. The development connection hook
+preserves Winsock's nonblocking error so the client can poll instead of aborting.
+The numeric loopback DNS result is completed locally. Disconnect clears the
+32-byte title-server hostname while Retry skips discovery; the scoped development
+handoff restores that field before reconnecting.
+
+This disc's older `XStringVerify` call uses packed six-byte input and ten-byte
+output structures. The development hook validates the supplied name and completes
+synchronously. It does not contact Microsoft's name-verification service.
+
+`psu_trace_network` logs call sites, return values, destinations and state changes;
+server diagnostics log packet commands and sizes. Login payloads and session keys
+are not logged. The game data, profiles, databases and diagnostic traces stay local
+and are excluded from source control.
+
+Protocol investigation used the
+[Gurhal source](https://github.com/princebyyourlogic/gurhal) as a reference for shared
+PSU packet layouts. Its supported PS2 discs differ from this Xbox disc. In
+particular, the Xbox area archives use big-endian `NMLB` data; PS2 archives cannot
+simply be substituted. Native lobby transfer and the local player's world record
+are verified, including remote players in two native clients. Internet latency
+and multi-computer compatibility still require testing. Archive/quest investigation also consulted
+[prettystellaruniverse](https://github.com/PSChuze/prettystellaruniverse).

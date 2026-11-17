@@ -1,0 +1,23 @@
+[Unit]
+Description=PSU community lobby
+After=network.target
+
+[Service]
+Type=simple
+User=psu-community
+Group=psu-community
+WorkingDirectory=/srv/psu-community
+ExecStart=/usr/bin/python3 -u /srv/psu-community/tools/run-community-server.py --state-dir /var/lib/psu-community serve --game-data /srv/psu-community/game --bind 0.0.0.0 --port 15021
+Restart=on-failure
+RestartSec=5
+StateDirectory=psu-community
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/psu-community
+
+[Install]
+WantedBy=multi-user.target
